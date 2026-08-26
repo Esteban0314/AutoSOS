@@ -1,4 +1,5 @@
 import Link from "next/link";
+import UserMenu from "@/components/ui/UserMenu";
 import {
   Car,
   Home,
@@ -99,9 +100,7 @@ export default function Navbar({
 
         {/* PERFIL */}
 
-        <Button>
-          Mi perfil
-        </Button>
+       <UserMenu />
 
       </div>
 
