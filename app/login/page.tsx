@@ -2,13 +2,17 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { Car, Mail, Lock, ShieldCheck, ArrowRight, AlertCircle } from "lucide-react";
+import Button from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import Card from "@/components/ui/Card";
 
 export default function LoginPage() {
   const router = useRouter();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
@@ -33,153 +37,116 @@ export default function LoginPage() {
       const data = await response.json();
 
       if (!response.ok || !data.success) {
-        setMessage(data.message || "Error al iniciar sesión");
+        setMessage(data.message || "Credenciales incorrectas o error en el inicio de sesión");
         return;
       }
 
       if (data.requiresVerification) {
-        // Guardamos temporalmente el ID para verificar el código
-        sessionStorage.setItem(
-          "verificationUserId",
-          data.userId.toString()
-        );
-
+        sessionStorage.setItem("verificationUserId", data.userId.toString());
         router.push("/verify");
+      } else {
+        router.push(data.user?.role === "ADMIN" ? "/admin" : "/");
+        router.refresh();
       }
     } catch (error) {
       console.error(error);
-
-      setMessage("Ocurrió un error al conectar con el servidor");
+      setMessage("Ocurrió un error al conectar con el servidor de autenticación");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <main className="min-h-screen bg-white flex items-center justify-center px-4">
-      <div className="w-full max-w-md">
-        {/* Logo / Título */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-[#0C3B2E]">
-            AutoSOS
-          </h1>
+    <main className="min-h-screen bg-gradient-to-b from-[#0C3B2E] via-[#0F4C3A] to-[#07261D] flex items-center justify-center px-4 py-12 relative overflow-hidden text-[#0C3B2E] selection:bg-[#FFBA00] selection:text-[#0C3B2E]">
+      {/* Background Ambient Glows */}
+      <div className="absolute -left-20 -top-20 h-96 w-96 rounded-full bg-[#6D9773]/25 blur-3xl pointer-events-none" />
+      <div className="absolute -right-20 -bottom-20 h-96 w-96 rounded-full bg-[#FFBA00]/20 blur-3xl pointer-events-none" />
 
-          <p className="text-gray-500 mt-2">
-            Inicia sesión para continuar
+      {/* Grid Pattern */}
+      <div className="absolute inset-0 opacity-5 bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:20px_20px] pointer-events-none" />
+
+      <div className="w-full max-w-md relative z-10 animate-enter-scale">
+        {/* LOGO & BRAND */}
+        <div className="text-center mb-8">
+          <Link href="/" className="inline-flex items-center gap-2.5 group">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 text-[#FFBA00] shadow-xl group-hover:scale-105 transition-transform">
+              <Car size={26} />
+            </div>
+            <span className="text-3xl font-extrabold tracking-tight text-white">
+              Auto<span className="text-[#FFBA00]">SOS</span>
+            </span>
+          </Link>
+
+          <p className="text-sm text-gray-200 mt-2 font-medium">
+            Ingresa a tu cuenta para gestionar tus asistencias y vehículos
           </p>
         </div>
 
-        {/* Card */}
-        <div className="border border-gray-200 rounded-2xl p-8 shadow-sm">
-          <h2 className="text-2xl font-semibold text-[#0C3B2E] mb-6">
-            Iniciar sesión
-          </h2>
-
-          <form onSubmit={handleLogin} className="space-y-5">
-            {/* Email */}
+        {/* CARD */}
+        <Card className="shadow-2xl border-white/20 bg-white/95 backdrop-blur-md p-8 rounded-3xl">
+          <div className="mb-6 border-b border-gray-100 pb-4 flex items-center justify-between">
             <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-[#0C3B2E] mb-2"
-              >
-                Correo electrónico
-              </label>
-
-              <input
-                    id="email"
-                    type="email"
-                    placeholder="ejemplo@correo.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="
-                        w-full
-                        border
-                        border-gray-300
-                        rounded-lg
-                        px-4
-                        py-3
-                        outline-none
-                        focus:border-[#6D9773]
-                        text-gray-900
-                        bg-white
-                    "
-                    required
-                />
+              <h2 className="text-xl font-bold text-[#0C3B2E]">Iniciar sesión</h2>
+              <p className="text-xs text-gray-500 mt-0.5">Ingresa tus credenciales registradas</p>
             </div>
+            <ShieldCheck size={24} className="text-[#6D9773]" />
+          </div>
 
-            {/* Password */}
-            <div>
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium text-[#0C3B2E] mb-2"
-              >
-                Contraseña
-              </label>
+          <form onSubmit={handleLogin} className="space-y-4">
+            <Input
+              id="email"
+              type="email"
+              label="Correo electrónico"
+              placeholder="ejemplo@correo.com"
+              icon={<Mail size={18} />}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
 
-              <input
-                    id="password"
-                    type="password"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="
-                        w-full
-                        border
-                        border-gray-300
-                        rounded-lg
-                        px-4
-                        py-3
-                        outline-none
-                        focus:border-[#6D9773]
-                        text-gray-900
-                        bg-white
-                        dark:text-gray-900
-                        dark:bg-white
-                    "
-                    required
-                />
-            </div>
+            <Input
+              id="password"
+              type="password"
+              label="Contraseña"
+              placeholder="••••••••"
+              icon={<Lock size={18} />}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
 
-            {/* Mensaje */}
+            {/* Error message */}
             {message && (
-              <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm">
-                {message}
+              <div className="flex items-center gap-2 rounded-xl bg-red-50 p-3.5 text-xs font-semibold text-red-700 border border-red-200 animate-enter-scale">
+                <AlertCircle size={16} className="shrink-0 text-red-500" />
+                <span>{message}</span>
               </div>
             )}
 
-            {/* Botón */}
-            <button
+            <Button
               type="submit"
-              disabled={loading}
-              className="
-                w-full
-                bg-[#6D9773]
-                text-white
-                py-3
-                rounded-lg
-                font-semibold
-                transition
-                hover:opacity-90
-                disabled:opacity-50
-              "
+              variant="primary"
+              fullWidth
+              size="lg"
+              loading={loading}
+              icon={<ArrowRight size={16} />}
+              className="mt-2 font-bold shadow-md hover:shadow-[#6D9773]/25"
             >
-              {loading
-                ? "Verificando..."
-                : "Continuar"}
-            </button>
+              Continuar
+            </Button>
           </form>
 
-          <div className="mt-6 text-center text-sm text-gray-500">
-            ¿No tienes una cuenta?
-            <button
-              type="button"
-              className="ml-1 text-[#6D9773] font-semibold hover:underline"
-            >
-              Regístrate
-            </button>
+          {/* Footer Card */}
+          <div className="mt-6 pt-4 border-t border-gray-100 text-center text-xs text-gray-500">
+            <span>¿Olvidaste tu contraseña o necesitas ayuda?</span>
+            <div className="mt-2">
+              <Link href="/" className="text-[#6D9773] font-bold hover:underline">
+                Volver al inicio
+              </Link>
+            </div>
           </div>
-        </div>
+        </Card>
       </div>
     </main>
   );
-}
+}

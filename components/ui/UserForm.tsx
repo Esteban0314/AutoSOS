@@ -1,8 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import Button from "./Button";
+import { Input, Select } from "./Input";
+import { User as UserIcon, Mail, Lock, Phone, AlertCircle } from "lucide-react";
 
-type User = {
+export type User = {
   id?: number;
   name: string;
   email: string;
@@ -10,7 +13,7 @@ type User = {
   role: string;
 };
 
-type UserFormProps = {
+export type UserFormProps = {
   user?: User | null;
   onSuccess: (user: User) => void;
   onCancel: () => void;
@@ -84,7 +87,7 @@ export default function UserForm({
       setError(
         error instanceof Error
           ? error.message
-          : "Ocurrió un error"
+          : "Ocurrió un error al procesar la solicitud"
       );
     } finally {
       setLoading(false);
@@ -92,198 +95,95 @@ export default function UserForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
-      {/* Nombre */}
-      <div>
-        <label className="block text-sm font-semibold text-[#0C3B2E] mb-2">
-          Nombre
-        </label>
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <Input
+        id="name"
+        label="Nombre completo"
+        icon={<UserIcon size={18} />}
+        value={name}
+        onChange={(event) => setName(event.target.value)}
+        placeholder="Ej. Juan Pérez"
+        required
+      />
 
-        <input
-          type="text"
-          value={name}
-          onChange={(event) => setName(event.target.value)}
-          placeholder="Nombre completo"
-          required
-          className="
-            w-full
-            border
-            border-gray-300
-            rounded-lg
-            px-4
-            py-3
-            outline-none
-            focus:ring-2
-            focus:ring-[#6D9773]
-            text-gray-900
-            bg-white
-          "
-        />
-      </div>
+      <Input
+        id="email"
+        type="email"
+        label="Correo electrónico"
+        icon={<Mail size={18} />}
+        value={email}
+        onChange={(event) => setEmail(event.target.value)}
+        placeholder="correo@ejemplo.com"
+        required
+      />
 
-      {/* Email */}
-      <div>
-        <label className="block text-sm font-semibold text-[#0C3B2E] mb-2">
-          Correo electrónico
-        </label>
+      <Input
+        id="password"
+        type="password"
+        label="Contraseña"
+        icon={<Lock size={18} />}
+        value={password}
+        onChange={(event) => setPassword(event.target.value)}
+        placeholder={
+          isEditing
+            ? "Dejar vacío para mantener la actual"
+            : "••••••••"
+        }
+        required={!isEditing}
+        helperText={
+          isEditing
+            ? "Solo llena este campo si deseas cambiar la contraseña del usuario."
+            : "Mínimo 6 caracteres recomendados."
+        }
+      />
 
-        <input
-          type="email"
-          value={email}
-          onChange={(event) => setEmail(event.target.value)}
-          placeholder="correo@ejemplo.com"
-          required
-          className="
-            w-full
-            border
-            border-gray-300
-            rounded-lg
-            px-4
-            py-3
-            outline-none
-            focus:ring-2
-            focus:ring-[#6D9773]
-            text-gray-900
-            bg-white
-          "
-        />
-      </div>
+      <Input
+        id="phone"
+        type="tel"
+        label="Teléfono / Celular"
+        icon={<Phone size={18} />}
+        value={phone}
+        onChange={(event) => setPhone(event.target.value)}
+        placeholder="Ej. 70000000"
+      />
 
-      {/* Contraseña */}
-      <div>
-        <label className="block text-sm font-semibold text-[#0C3B2E] mb-2">
-          Contraseña
-        </label>
-
-        <input
-          type="password"
-          value={password}
-          onChange={(event) => setPassword(event.target.value)}
-          placeholder={
-            isEditing
-              ? "Dejar vacío para mantener la actual"
-              : "Contraseña"
-          }
-          required={!isEditing}
-          className="
-            w-full
-            border
-            border-gray-300
-            rounded-lg
-            px-4
-            py-3
-            outline-none
-            focus:ring-2
-            focus:ring-[#6D9773]
-            text-gray-900
-            bg-white
-          "
-        />
-      </div>
-
-      {/* Teléfono */}
-      <div>
-        <label className="block text-sm font-semibold text-[#0C3B2E] mb-2">
-          Teléfono
-        </label>
-
-        <input
-          type="tel"
-          value={phone}
-          onChange={(event) => setPhone(event.target.value)}
-          placeholder="70000000"
-          className="
-            w-full
-            border
-            border-gray-300
-            rounded-lg
-            px-4
-            py-3
-            outline-none
-            focus:ring-2
-            focus:ring-[#6D9773]
-            text-gray-900
-            bg-white
-          "
-        />
-      </div>
-
-      {/* Rol */}
-      <div>
-        <label className="block text-sm font-semibold text-[#0C3B2E] mb-2">
-          Rol
-        </label>
-
-        <select
-          value={role}
-          onChange={(event) => setRole(event.target.value)}
-          className="
-            w-full
-            border
-            border-gray-300
-            rounded-lg
-            px-4
-            py-3
-            outline-none
-            focus:ring-2
-            focus:ring-[#6D9773]
-            text-gray-900
-            bg-white
-          "
-        >
-          <option value="CUSTOMER" className="text-gray-900 bg-white">Cliente</option>
-          <option value="BUSINESS" className="text-gray-900 bg-white">Negocio</option>
-          <option value="ADMIN" className="text-gray-900 bg-white">Administrador</option>
-        </select>
-      </div>
+      <Select
+        id="role"
+        label="Rol en el sistema"
+        value={role}
+        onChange={(event) => setRole(event.target.value)}
+      >
+        <option value="CUSTOMER">Cliente (Conductor/Usuario)</option>
+        <option value="BUSINESS">Negocio (Taller/Grúa/Repuestos)</option>
+        <option value="ADMIN">Administrador del Sistema</option>
+      </Select>
 
       {/* Error */}
       {error && (
-        <div className="bg-red-50 text-red-600 px-4 py-3 rounded-lg text-sm">
-          {error}
+        <div className="flex items-center gap-2 rounded-xl bg-red-50 p-4 text-xs font-semibold text-red-700 border border-red-200">
+          <AlertCircle size={16} className="shrink-0 text-red-500" />
+          <span>{error}</span>
         </div>
       )}
 
       {/* Botones */}
-      <div className="flex justify-end gap-3 pt-4">
-        <button
-          type="button"
+      <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
+        <Button
+          variant="outline"
           onClick={onCancel}
           disabled={loading}
-          className="
-            px-5
-            py-3
-            rounded-lg
-            font-semibold
-            bg-gray-200
-            text-gray-700
-            hover:bg-gray-300
-          "
         >
           Cancelar
-        </button>
+        </Button>
 
-        <button
+        <Button
           type="submit"
-          disabled={loading}
-          className="
-            px-5
-            py-3
-            rounded-lg
-            font-semibold
-            bg-[#6D9773]
-            text-white
-            hover:opacity-90
-            disabled:opacity-50
-          "
+          variant="primary"
+          loading={loading}
         >
-          {loading
-            ? "Guardando..."
-            : isEditing
-              ? "Guardar cambios"
-              : "Crear usuario"}
-        </button>
+          {isEditing ? "Guardar cambios" : "Crear usuario"}
+        </Button>
       </div>
     </form>
   );
-}
+}

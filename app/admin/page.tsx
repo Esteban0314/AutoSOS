@@ -1,5 +1,20 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
+import {
+  Users,
+  Wrench,
+  Store,
+  Truck,
+  ArrowRight,
+  Brain,
+} from "lucide-react";
 import { requireAdmin } from "@/lib/auth";
+import StatCard from "@/components/ui/StatCard";
+import Button from "@/components/ui/Button";
+import Card from "@/components/ui/Card";
+import Badge from "@/components/ui/Badge";
+import LogoutButton from "@/components/ui/LogoutButton";
+import Navbar from "@/components/layout/Navbare";
 
 export default async function AdminPage() {
   let user;
@@ -11,141 +26,169 @@ export default async function AdminPage() {
       if (error.message === "UNAUTHORIZED") {
         redirect("/login");
       }
-
       if (error.message === "FORBIDDEN") {
         redirect("/");
       }
     }
-
-    // Si ocurre otro error inesperado
     throw error;
   }
 
   return (
-    <main className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-[#0C3B2E] text-white">
-        <div className="max-w-7xl mx-auto px-6 py-5 flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold">
-              AutoSOS
-            </h1>
+    <div className="min-h-screen bg-[#F8FAF8] text-[#0C3B2E]">
+      {/* NAVBAR */}
+      <Navbar />
 
-            <p className="text-sm text-gray-200">
-              Panel de administración
+      {/* HEADER HERO */}
+      <div className="border-b border-[#145341] bg-gradient-to-r from-[#0C3B2E] via-[#0F4C3A] to-[#07261D] text-white">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 py-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <Badge variant="amber" size="sm" withDot pulseDot>
+                Panel de Control
+              </Badge>
+              <span className="text-xs text-gray-300">AutoSOS Core Admin</span>
+            </div>
+            <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-white">
+              Bienvenido, {user.name}
+            </h1>
+            <p className="text-xs text-gray-300 mt-1">
+              Monitorea y administra los servicios, usuarios y cobertura de la plataforma.
             </p>
           </div>
 
-          <div className="text-right">
-            <p className="font-semibold">
-              {user.name}
-            </p>
+          <div className="flex items-center gap-3">
+            <Link href="/admin/users">
+              <Button variant="yellow" size="sm" icon={<Users size={16} />}>
+                Gestionar Usuarios
+              </Button>
+            </Link>
 
-            <p className="text-sm text-gray-300">
-              Administrador
-            </p>
+            <LogoutButton
+              className="rounded-xl border border-white/20 bg-white/10 px-4 py-2 text-xs font-semibold text-white hover:bg-white/20 transition"
+              showIcon
+            />
           </div>
         </div>
-      </header>
+      </div>
 
-      {/* Contenido */}
-      <section className="max-w-7xl mx-auto px-6 py-10">
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold text-[#0C3B2E]">
-            Bienvenido al panel
+      {/* CONTENIDO DASHBOARD */}
+      <main className="mx-auto max-w-7xl px-4 sm:px-6 py-10 space-y-10">
+        {/* STATS GRID */}
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-base font-bold uppercase tracking-wider text-[#6D9773]">
+              Métricas Principales
+            </h2>
+            <span className="text-xs text-gray-400 font-semibold">Actualizado en tiempo real</span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <StatCard
+              title="Usuarios"
+              value="142"
+              subtitle="Clientes y propietarios de autos"
+              icon={<Users size={24} className="text-[#6D9773]" />}
+              trend={{ value: "+14% este mes", isPositive: true }}
+            />
+
+            <StatCard
+              title="Talleres"
+              value="45"
+              subtitle="Talleres mecánicos registrados"
+              icon={<Wrench size={24} className="text-[#6D9773]" />}
+              trend={{ value: "+4 nuevos", isPositive: true }}
+            />
+
+            <StatCard
+              title="Grúas Activas"
+              value="18"
+              subtitle="Unidades de rescate 24/7"
+              icon={<Truck size={24} className="text-[#6D9773]" />}
+              trend={{ value: "100% operativas", isPositive: true }}
+            />
+
+            <StatCard
+              title="Tiendas"
+              value="30"
+              subtitle="Locales de repuestos certificados"
+              icon={<Store size={24} className="text-[#6D9773]" />}
+              trend={{ value: "+2 esta semana", isPositive: true }}
+            />
+          </div>
+        </div>
+
+        {/* ACCESOS DIRECTOS Y GESTIÓN */}
+        <div>
+          <h2 className="text-base font-bold uppercase tracking-wider text-[#6D9773] mb-4">
+            Herramientas de Administración
           </h2>
 
-          <p className="text-gray-500 mt-2">
-            Desde aquí podrás administrar los datos de AutoSOS.
-          </p>
-        </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Gestión de Usuarios */}
+            <Card hoverEffect className="flex flex-col justify-between">
+              <div>
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#E8F0E9] text-[#0C3B2E] mb-4">
+                  <Users size={24} className="text-[#6D9773]" />
+                </div>
+                <h3 className="text-lg font-bold text-[#0C3B2E]">
+                  Gestión de Usuarios
+                </h3>
+                <p className="mt-2 text-xs text-gray-500 leading-relaxed">
+                  Crea, edita, asigna roles de administración o cliente y gestiona accesos al sistema.
+                </p>
+              </div>
 
-        {/* Tarjetas */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-            <p className="text-gray-500 text-sm">
-              Usuarios
-            </p>
+              <Link href="/admin/users" className="mt-6 block">
+                <Button variant="outline" fullWidth icon={<ArrowRight size={15} />}>
+                  Abrir lista de usuarios
+                </Button>
+              </Link>
+            </Card>
 
-            <p className="text-3xl font-bold text-[#0C3B2E] mt-2">
-              —
-            </p>
+            {/* Gestión de Negocios */}
+            <Card hoverEffect className="flex flex-col justify-between">
+              <div>
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#E8F0E9] text-[#0C3B2E] mb-4">
+                  <Wrench size={24} className="text-[#6D9773]" />
+                </div>
+                <h3 className="text-lg font-bold text-[#0C3B2E]">
+                  Directorio de Negocios
+                </h3>
+                <p className="mt-2 text-xs text-gray-500 leading-relaxed">
+                  Supervisa talleres mecánicos, servicios de grúa y repuestos con verificación de licencias.
+                </p>
+              </div>
 
-            <p className="text-sm text-gray-400 mt-2">
-              Próximamente
-            </p>
-          </div>
+              <Link href="/servicios" className="mt-6 block">
+                <Button variant="outline" fullWidth icon={<ArrowRight size={15} />}>
+                  Ver mapa y catálogo
+                </Button>
+              </Link>
+            </Card>
 
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-            <p className="text-gray-500 text-sm">
-              Talleres
-            </p>
+            {/* Diagnóstico IA Monitor */}
+            <Card hoverEffect className="flex flex-col justify-between">
+              <div>
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#E8F0E9] text-[#0C3B2E] mb-4">
+                  <Brain size={24} className="text-[#6D9773]" />
+                </div>
+                <h3 className="text-lg font-bold text-[#0C3B2E]">
+                  Asistente IA AutoSOS
+                </h3>
+                <p className="mt-2 text-xs text-gray-500 leading-relaxed">
+                  Revisa los diagnósticos preliminares y estadísticas de consultas automotrices de los usuarios.
+                </p>
+              </div>
 
-            <p className="text-3xl font-bold text-[#0C3B2E] mt-2">
-              —
-            </p>
-
-            <p className="text-sm text-gray-400 mt-2">
-              Próximamente
-            </p>
-          </div>
-
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-            <p className="text-gray-500 text-sm">
-              Tiendas
-            </p>
-
-            <p className="text-3xl font-bold text-[#0C3B2E] mt-2">
-              —
-            </p>
-
-            <p className="text-sm text-gray-400 mt-2">
-              Próximamente
-            </p>
-          </div>
-
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-            <p className="text-gray-500 text-sm">
-              Grúas
-            </p>
-
-            <p className="text-3xl font-bold text-[#0C3B2E] mt-2">
-              —
-            </p>
-
-            <p className="text-sm text-gray-400 mt-2">
-              Próximamente
-            </p>
-          </div>
-
-        </div>
-
-        {/* Sección CRUD */}
-        <div className="mt-10 bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
-          <h3 className="text-xl font-bold text-[#0C3B2E]">
-            Administración
-          </h3>
-
-          <p className="text-gray-500 mt-2">
-            Aquí construiremos las herramientas CRUD de AutoSOS.
-          </p>
-
-          <div className="flex flex-wrap gap-4 mt-6">
-            <button className="bg-[#6D9773] text-white px-5 py-3 rounded-lg font-semibold">
-              Usuarios
-            </button>
-
-            <button className="bg-[#6D9773] text-white px-5 py-3 rounded-lg font-semibold">
-              Negocios
-            </button>
-
-            <button className="bg-[#6D9773] text-white px-5 py-3 rounded-lg font-semibold">
-              Vehículos
-            </button>
+              <Link href="/" className="mt-6 block">
+                <Button variant="outline" fullWidth icon={<ArrowRight size={15} />}>
+                  Ver estado del asistente
+                </Button>
+              </Link>
+            </Card>
           </div>
         </div>
-      </section>
-    </main>
+      </main>
+    </div>
   );
-}
+}

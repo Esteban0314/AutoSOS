@@ -1,5 +1,21 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
+import {
+  User as UserIcon,
+  Mail,
+  Phone,
+  Shield,
+  Car,
+  Plus,
+  ArrowRight,
+  Edit3,
+} from "lucide-react";
 import { requireAuth } from "@/lib/auth";
+import Button from "@/components/ui/Button";
+import Card from "@/components/ui/Card";
+import Badge from "@/components/ui/Badge";
+import Navbar from "@/components/layout/Navbare";
+import Footer from "@/components/layout/Footer";
 
 export default async function PerfilPage() {
   let user;
@@ -11,254 +27,160 @@ export default async function PerfilPage() {
       if (error.message === "UNAUTHORIZED") {
         redirect("/login");
       }
-
       if (error.message === "FORBIDDEN") {
         redirect("/");
       }
     }
-
     redirect("/login");
   }
 
+  const roleLabel =
+    user.role === "ADMIN"
+      ? "Administrador del Sistema"
+      : user.role === "BUSINESS"
+      ? "Cuenta Comercial"
+      : "Conductor / Cliente";
+
   return (
-    <main className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#F8FAF8] text-[#0C3B2E] flex flex-col justify-between selection:bg-[#6D9773] selection:text-white">
+      {/* NAVBAR */}
+      <Navbar />
 
-      {/* HEADER */}
-      <header className="bg-[#0C3B2E] text-white">
-        <div className="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between">
+      {/* CONTENIDO */}
+      <main className="flex-1">
+        <section className="mx-auto max-w-5xl px-4 sm:px-6 py-10 space-y-8">
+          {/* HEADER PERFIL HERO */}
+          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0C3B2E] via-[#0F4C3A] to-[#07261D] text-white p-8 sm:p-10 shadow-xl border border-[#145341]">
+            <div className="relative z-10 flex flex-col sm:flex-row items-center sm:items-start justify-between gap-6">
+              <div className="flex flex-col sm:flex-row items-center gap-6 text-center sm:text-left">
+                {/* Avatar */}
+                <div className="relative flex h-24 w-24 shrink-0 items-center justify-center rounded-3xl bg-[#FFBA00] text-[#0C3B2E] text-4xl font-extrabold shadow-2xl border-4 border-white/20">
+                  {user.name.charAt(0).toUpperCase()}
+                  <span className="absolute -bottom-1 -right-1 h-5 w-5 rounded-full bg-emerald-500 border-2 border-white ring-2 ring-emerald-400" />
+                </div>
 
-          <div>
-            <h1 className="text-2xl font-bold">
-              AutoSOS
-            </h1>
+                <div>
+                  <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                    <Badge variant="amber" size="sm" withDot pulseDot>
+                      {roleLabel}
+                    </Badge>
+                    <span className="rounded-full bg-white/10 px-3 py-0.5 text-xs text-gray-200 border border-white/15">
+                      AutoSOS Miembro
+                    </span>
+                  </div>
 
-            <p className="text-sm text-gray-300">
-              Mi perfil
-            </p>
-          </div>
+                  <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-white">
+                    {user.name}
+                  </h1>
 
-          <a
-            href="/"
-            className="
-              bg-[#FFBA00]
-              text-[#0C3B2E]
-              px-5
-              py-2.5
-              rounded-lg
-              font-semibold
-              hover:opacity-90
-              transition
-            "
-          >
-            Volver al inicio
-          </a>
-
-        </div>
-      </header>
-
-
-      {/* PERFIL */}
-      <section className="max-w-5xl mx-auto px-6 py-10">
-
-        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
-
-          {/* CABECERA DEL PERFIL */}
-          <div className="bg-[#0C3B2E] px-8 py-10 text-white">
-
-            <div className="flex items-center gap-6">
-
-              <div
-                className="
-                  w-24
-                  h-24
-                  rounded-full
-                  bg-[#FFBA00]
-                  text-[#0C3B2E]
-                  flex
-                  items-center
-                  justify-center
-                  text-4xl
-                  font-bold
-                "
-              >
-                {user.name.charAt(0).toUpperCase()}
+                  <p className="mt-1 text-sm text-gray-300 font-medium">
+                    {user.email}
+                  </p>
+                </div>
               </div>
 
+              {/* Botón Editar Perfil */}
+              <Link href="/perfil/editar">
+                <Button variant="yellow" size="sm" icon={<Edit3 size={15} />}>
+                  Editar perfil
+                </Button>
+              </Link>
+            </div>
+          </div>
+
+          {/* INFORMACIÓN PERSONAL */}
+          <Card>
+            <div className="flex items-center justify-between border-b border-gray-100 pb-4">
               <div>
-                <p className="text-sm text-gray-300">
-                  Mi cuenta
-                </p>
-
-                <h2 className="text-3xl font-bold mt-1">
-                  {user.name}
-                </h2>
-
-                <p className="text-gray-300 mt-1">
-                  {user.role === "ADMIN"
-                    ? "Administrador"
-                    : user.role === "BUSINESS"
-                      ? "Negocio"
-                      : "Cliente"}
-                </p>
+                <h2 className="text-lg font-bold text-[#0C3B2E]">Información personal</h2>
+                <p className="text-xs text-gray-500 mt-0.5">Datos asociados a tu cuenta de AutoSOS</p>
               </div>
 
+              <Link href="/perfil/editar" className="text-xs font-bold text-[#6D9773] hover:underline">
+                Actualizar datos
+              </Link>
             </div>
 
-          </div>
-
-
-          {/* INFORMACIÓN */}
-          <div className="p-8">
-
-            <h3 className="text-xl font-bold text-[#0C3B2E]">
-              Información personal
-            </h3>
-
-            <p className="text-gray-500 mt-1">
-              Información asociada a tu cuenta de AutoSOS.
-            </p>
-
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-7">
-
-              {/* NOMBRE */}
-              <div className="bg-gray-50 rounded-2xl p-5">
-                <p className="text-sm text-gray-500">
-                  Nombre completo
-                </p>
-
-                <p className="text-lg font-semibold text-[#0C3B2E] mt-2">
-                  {user.name}
-                </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+              <div className="rounded-2xl bg-[#F8FAF8] p-4 border border-[#DCE7DE]/60">
+                <div className="flex items-center gap-2 text-gray-400 text-xs font-semibold uppercase tracking-wider">
+                  <UserIcon size={14} className="text-[#6D9773]" />
+                  <span>Nombre</span>
+                </div>
+                <p className="mt-2 font-bold text-sm text-[#0C3B2E]">{user.name}</p>
               </div>
 
-
-              {/* EMAIL */}
-              <div className="bg-gray-50 rounded-2xl p-5">
-                <p className="text-sm text-gray-500">
-                  Correo electrónico
-                </p>
-
-                <p className="text-lg font-semibold text-[#0C3B2E] mt-2 break-all">
-                  {user.email}
-                </p>
+              <div className="rounded-2xl bg-[#F8FAF8] p-4 border border-[#DCE7DE]/60">
+                <div className="flex items-center gap-2 text-gray-400 text-xs font-semibold uppercase tracking-wider">
+                  <Mail size={14} className="text-[#6D9773]" />
+                  <span>Correo</span>
+                </div>
+                <p className="mt-2 font-bold text-sm text-[#0C3B2E] truncate">{user.email}</p>
               </div>
 
-
-              {/* TELÉFONO */}
-              <div className="bg-gray-50 rounded-2xl p-5">
-                <p className="text-sm text-gray-500">
-                  Teléfono
-                </p>
-
-                <p className="text-lg font-semibold text-[#0C3B2E] mt-2">
-                  {user.phone || "No registrado"}
-                </p>
+              <div className="rounded-2xl bg-[#F8FAF8] p-4 border border-[#DCE7DE]/60">
+                <div className="flex items-center gap-2 text-gray-400 text-xs font-semibold uppercase tracking-wider">
+                  <Phone size={14} className="text-[#6D9773]" />
+                  <span>Teléfono</span>
+                </div>
+                <p className="mt-2 font-bold text-sm text-[#0C3B2E]">{user.phone || "No registrado"}</p>
               </div>
 
+              <div className="rounded-2xl bg-[#F8FAF8] p-4 border border-[#DCE7DE]/60">
+                <div className="flex items-center gap-2 text-gray-400 text-xs font-semibold uppercase tracking-wider">
+                  <Shield size={14} className="text-[#6D9773]" />
+                  <span>Rol</span>
+                </div>
+                <p className="mt-2 font-bold text-sm text-[#0C3B2E]">{roleLabel}</p>
+              </div>
+            </div>
+          </Card>
 
-              {/* ROL */}
-              <div className="bg-gray-50 rounded-2xl p-5">
-                <p className="text-sm text-gray-500">
-                  Tipo de cuenta
-                </p>
-
-                <p className="text-lg font-semibold text-[#0C3B2E] mt-2">
-                  {user.role === "ADMIN"
-                    ? "Administrador"
-                    : user.role === "BUSINESS"
-                      ? "Negocio"
-                      : "Cliente"}
-                </p>
+          {/* MIS VEHÍCULOS / GARAGE */}
+          <Card>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-100 pb-5">
+              <div className="flex items-center gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#E8F0E9] text-[#0C3B2E]">
+                  <Car size={22} className="text-[#6D9773]" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-[#0C3B2E]">Mi Garage de Vehículos</h2>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    Registra tus autos para agilizar cotizaciones y diagnósticos automáticos
+                  </p>
+                </div>
               </div>
 
+              <Link href="/perfil/editar">
+                <Button variant="primary" size="sm" icon={<Plus size={15} />}>
+                  Agregar vehículo
+                </Button>
+              </Link>
             </div>
 
-
-            {/* EDITAR */}
-            <div className="mt-8 flex justify-end">
-
-              <button
-                className="
-                  bg-[#6D9773]
-                  text-white
-                  px-6
-                  py-3
-                  rounded-lg
-                  font-semibold
-                  hover:opacity-90
-                  transition
-                "
-              >
-                Editar información
-              </button>
-
-            </div>
-
-          </div>
-
-        </div>
-
-
-        {/* VEHÍCULOS */}
-        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 mt-8">
-
-          <div className="flex items-center justify-between">
-
-            <div>
-              <h3 className="text-xl font-bold text-[#0C3B2E]">
-                Mis vehículos
+            {/* Garage Empty State / Preview */}
+            <div className="mt-6 rounded-2xl border-2 border-dashed border-[#DCE7DE] bg-[#F8FAF8]/60 p-8 text-center">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-3xl bg-[#E8F0E9] text-[#0C3B2E] mb-3 shadow-xs">
+                <Car size={28} className="text-[#6D9773]" />
+              </div>
+              <h3 className="text-base font-bold text-[#0C3B2E]">
+                Aún no tienes vehículos vinculados
               </h3>
-
-              <p className="text-gray-500 mt-1">
-                Aquí aparecerán los vehículos asociados a tu cuenta.
+              <p className="text-xs text-gray-500 mt-1 max-w-sm mx-auto">
+                Al vincular la placa, marca y modelo de tu auto, los talleres mecánicos podrán brindarte diagnósticos y repuestos exactos sin demoras.
               </p>
+              <Link href="/servicios" className="inline-block mt-4">
+                <Button variant="outline" size="sm" icon={<ArrowRight size={14} />}>
+                  Explorar talleres para mi auto
+                </Button>
+              </Link>
             </div>
+          </Card>
+        </section>
+      </main>
 
-            <span className="text-4xl">
-              🚗
-            </span>
-
-          </div>
-
-
-          <div className="mt-6 border-2 border-dashed border-gray-200 rounded-2xl p-10 text-center">
-
-            <div className="text-5xl mb-4">
-              🚘
-            </div>
-
-            <h4 className="font-bold text-[#0C3B2E] text-lg">
-              Aún no tienes vehículos
-            </h4>
-
-            <p className="text-gray-500 mt-2">
-              Cuando creemos el CRUD de vehículos podrás
-              registrar todos tus autos aquí.
-            </p>
-
-            <button
-              className="
-                mt-5
-                bg-[#6D9773]
-                text-white
-                px-5
-                py-3
-                rounded-lg
-                font-semibold
-                hover:opacity-90
-                transition
-              "
-            >
-              + Agregar vehículo
-            </button>
-
-          </div>
-
-        </div>
-
-      </section>
-
-    </main>
+      {/* FOOTER */}
+      <Footer />
+    </div>
   );
-}
+}
