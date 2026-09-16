@@ -137,11 +137,20 @@ export default function LoginPage() {
           </form>
 
           {/* Footer Card */}
-          <div className="mt-6 pt-4 border-t border-gray-100 text-center text-xs text-gray-500">
-            <span>¿Olvidaste tu contraseña o necesitas ayuda?</span>
-            <div className="mt-2">
-              <Link href="/" className="text-[#6D9773] font-bold hover:underline">
-                Volver al inicio
+          <div className="mt-6 pt-4 border-t border-gray-100 text-center text-xs text-gray-600 space-y-3">
+            <div>
+              <span>¿No tienes una cuenta aún?</span>
+              <Link
+                href="/registro"
+                className="ml-1.5 font-bold text-[#0C3B2E] underline decoration-[#FFBA00] decoration-2 underline-offset-2 hover:text-[#6D9773] transition"
+              >
+                Regístrate como Cliente o Negocio
+              </Link>
+            </div>
+
+            <div className="pt-2">
+              <Link href="/" className="text-gray-400 hover:text-gray-600 transition">
+                Volver a la página principal
               </Link>
             </div>
           </div>

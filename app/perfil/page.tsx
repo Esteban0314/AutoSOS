@@ -5,9 +5,6 @@ import {
   Mail,
   Phone,
   Shield,
-  Car,
-  Plus,
-  ArrowRight,
   Edit3,
 } from "lucide-react";
 import { requireAuth } from "@/lib/auth";
@@ -16,6 +13,7 @@ import Card from "@/components/ui/Card";
 import Badge from "@/components/ui/Badge";
 import Navbar from "@/components/layout/Navbare";
 import Footer from "@/components/layout/Footer";
+import VehiclesManager from "@/components/profile/VehiclesManager";
 
 export default async function PerfilPage() {
   let user;
@@ -136,46 +134,8 @@ export default async function PerfilPage() {
             </div>
           </Card>
 
-          {/* MIS VEHÍCULOS / GARAGE */}
-          <Card>
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-100 pb-5">
-              <div className="flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#E8F0E9] text-[#0C3B2E]">
-                  <Car size={22} className="text-[#6D9773]" />
-                </div>
-                <div>
-                  <h2 className="text-lg font-bold text-[#0C3B2E]">Mi Garage de Vehículos</h2>
-                  <p className="text-xs text-gray-500 mt-0.5">
-                    Registra tus autos para agilizar cotizaciones y diagnósticos automáticos
-                  </p>
-                </div>
-              </div>
-
-              <Link href="/perfil/editar">
-                <Button variant="primary" size="sm" icon={<Plus size={15} />}>
-                  Agregar vehículo
-                </Button>
-              </Link>
-            </div>
-
-            {/* Garage Empty State / Preview */}
-            <div className="mt-6 rounded-2xl border-2 border-dashed border-[#DCE7DE] bg-[#F8FAF8]/60 p-8 text-center">
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-3xl bg-[#E8F0E9] text-[#0C3B2E] mb-3 shadow-xs">
-                <Car size={28} className="text-[#6D9773]" />
-              </div>
-              <h3 className="text-base font-bold text-[#0C3B2E]">
-                Aún no tienes vehículos vinculados
-              </h3>
-              <p className="text-xs text-gray-500 mt-1 max-w-sm mx-auto">
-                Al vincular la placa, marca y modelo de tu auto, los talleres mecánicos podrán brindarte diagnósticos y repuestos exactos sin demoras.
-              </p>
-              <Link href="/servicios" className="inline-block mt-4">
-                <Button variant="outline" size="sm" icon={<ArrowRight size={14} />}>
-                  Explorar talleres para mi auto
-                </Button>
-              </Link>
-            </div>
-          </Card>
+          {/* MIS VEHÍCULOS / GARAGE REAL CRUD */}
+          <VehiclesManager />
         </section>
       </main>
 

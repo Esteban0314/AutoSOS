@@ -7,6 +7,7 @@ import {
   Truck,
   ArrowRight,
   Brain,
+  BarChart3,
 } from "lucide-react";
 import { requireAdmin } from "@/lib/auth";
 import StatCard from "@/components/ui/StatCard";
@@ -56,10 +57,16 @@ export default async function AdminPage() {
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <Link href="/admin/reportes">
+              <Button variant="yellow" size="sm" icon={<BarChart3 size={16} />}>
+                Ver Reportes y Métricas
+              </Button>
+            </Link>
+
             <Link href="/admin/users">
-              <Button variant="yellow" size="sm" icon={<Users size={16} />}>
-                Gestionar Usuarios
+              <Button variant="outline" size="sm" icon={<Users size={16} />} className="text-white border-white/30 hover:bg-white/10">
+                Usuarios
               </Button>
             </Link>
 
@@ -123,7 +130,7 @@ export default async function AdminPage() {
             Herramientas de Administración
           </h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {/* Gestión de Usuarios */}
             <Card hoverEffect className="flex flex-col justify-between">
               <div>
@@ -145,6 +152,27 @@ export default async function AdminPage() {
               </Link>
             </Card>
 
+            {/* Reportes y Analíticas */}
+            <Card hoverEffect className="flex flex-col justify-between border-[#FFBA00]/40">
+              <div>
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#FFF4D6] text-[#8C5D00] mb-4">
+                  <BarChart3 size={24} className="text-[#FFBA00]" />
+                </div>
+                <h3 className="text-lg font-bold text-[#0C3B2E]">
+                  Reportes y Métricas
+                </h3>
+                <p className="mt-2 text-xs text-gray-500 leading-relaxed">
+                  Métricas en tiempo real, fallas diagnosticadas por IA y exportación a CSV/PDF.
+                </p>
+              </div>
+
+              <Link href="/admin/reportes" className="mt-6 block">
+                <Button variant="yellow" fullWidth icon={<ArrowRight size={15} />}>
+                  Ver Analíticas
+                </Button>
+              </Link>
+            </Card>
+
             {/* Gestión de Negocios */}
             <Card hoverEffect className="flex flex-col justify-between">
               <div>
@@ -161,7 +189,7 @@ export default async function AdminPage() {
 
               <Link href="/servicios" className="mt-6 block">
                 <Button variant="outline" fullWidth icon={<ArrowRight size={15} />}>
-                  Ver mapa y catálogo
+                  Ver catálogo
                 </Button>
               </Link>
             </Card>
@@ -176,13 +204,13 @@ export default async function AdminPage() {
                   Asistente IA AutoSOS
                 </h3>
                 <p className="mt-2 text-xs text-gray-500 leading-relaxed">
-                  Revisa los diagnósticos preliminares y estadísticas de consultas automotrices de los usuarios.
+                  Revisa el motor de diagnóstico automotriz y las consultas en tiempo real.
                 </p>
               </div>
 
-              <Link href="/" className="mt-6 block">
+              <Link href="/diagnostico" className="mt-6 block">
                 <Button variant="outline" fullWidth icon={<ArrowRight size={15} />}>
-                  Ver estado del asistente
+                  Probar Asistente IA
                 </Button>
               </Link>
             </Card>

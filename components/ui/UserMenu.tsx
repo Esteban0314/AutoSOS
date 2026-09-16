@@ -9,6 +9,7 @@ import {
   LayoutDashboard,
   LogOut,
   Car,
+  BarChart3,
 } from "lucide-react";
 import Badge from "./Badge";
 
@@ -39,17 +40,41 @@ export default function UserMenu() {
   // Usuario no autenticado
   if (!user) {
     return (
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 sm:gap-3">
+        <Link
+          href="/registro"
+          className="
+            hidden sm:inline-flex items-center justify-center
+            border border-[#DCE7DE]
+            bg-white
+            text-[#0C3B2E]
+            px-3.5
+            py-2
+            rounded-xl
+            text-xs
+            font-bold
+            hover:border-[#6D9773]
+            hover:bg-[#F8FAF8]
+            transition-all
+            duration-200
+          "
+        >
+          Crear cuenta
+        </Link>
+
         <Link
           href="/login"
           className="
             inline-flex items-center justify-center
             bg-[#6D9773]
             text-white
-            px-5
-            py-2.5
+            px-4
+            sm:px-5
+            py-2
+            sm:py-2.5
             rounded-xl
-            text-sm
+            text-xs
+            sm:text-sm
             font-bold
             shadow-sm
             hover:bg-[#5b8361]
@@ -136,14 +161,25 @@ export default function UserMenu() {
 
           <div className="py-1 space-y-0.5">
             {user.role === "ADMIN" ? (
-              <Link
-                href="/admin"
-                onClick={() => setOpen(false)}
-                className="flex items-center gap-2.5 rounded-xl px-3.5 py-2.5 text-sm font-semibold text-[#0C3B2E] hover:bg-[#E8F0E9] transition"
-              >
-                <LayoutDashboard size={16} className="text-[#6D9773]" />
-                Panel de Administración
-              </Link>
+              <>
+                <Link
+                  href="/admin"
+                  onClick={() => setOpen(false)}
+                  className="flex items-center gap-2.5 rounded-xl px-3.5 py-2.5 text-sm font-semibold text-[#0C3B2E] hover:bg-[#E8F0E9] transition"
+                >
+                  <LayoutDashboard size={16} className="text-[#6D9773]" />
+                  Panel de Administración
+                </Link>
+
+                <Link
+                  href="/admin/reportes"
+                  onClick={() => setOpen(false)}
+                  className="flex items-center gap-2.5 rounded-xl px-3.5 py-2.5 text-sm font-semibold text-[#0C3B2E] hover:bg-[#E8F0E9] transition"
+                >
+                  <BarChart3 size={16} className="text-[#FFBA00]" />
+                  Reportes y Métricas
+                </Link>
+              </>
             ) : (
               <Link
                 href="/perfil"

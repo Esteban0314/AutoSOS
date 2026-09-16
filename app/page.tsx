@@ -168,7 +168,7 @@ export default function Home() {
                 </p>
 
                 <div className="mt-8 flex flex-wrap gap-4">
-                  <Link href="/servicios">
+                  <Link href="/diagnostico">
                     <Button
                       variant="yellow"
                       size="lg"

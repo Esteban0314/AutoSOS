@@ -37,7 +37,7 @@ export default function Navbar({ active }: NavbarProps) {
     {
       id: "diagnosis",
       label: "Diagnóstico IA",
-      href: "/#diagnostico",
+      href: "/diagnostico",
       icon: Brain,
       badge: "IA",
     },
