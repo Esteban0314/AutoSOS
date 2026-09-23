@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcrypt";
+import crypto from "crypto";
 import pool from "@/lib/db";
 
 export async function POST(request: Request) {
@@ -87,36 +88,31 @@ export async function POST(request: Request) {
 
     const newUser = result.rows[0];
 
-    // Generar código 2FA de 6 dígitos
-    const verificationCode = Math.floor(
-      100000 + Math.random() * 900000
-    ).toString();
-    const codeHash = await bcrypt.hash(verificationCode, 12);
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
-
-    await pool.query(
-      `
-      INSERT INTO verification_codes
-        (user_id, code_hash, expires_at)
-      VALUES ($1, $2, $3)
-      `,
-      [newUser.id, codeHash, expiresAt]
-    );
-
     if (assignedRole === "BUSINESS" && (businessType || businessAddress)) {
       console.log(
         `[AutoSOS Business] Tipo: ${businessType || "Taller"}, Dirección: ${businessAddress || "N/A"}`
       );
     }
 
-    console.log(`[AutoSOS] Código 2FA para registro ${newUser.email}: ${verificationCode}`);
+    // Generar token aleatorio para la sesión directa (sin código 2FA)
+    const sessionToken = crypto.randomBytes(32).toString("hex");
+    const tokenHash = await bcrypt.hash(sessionToken, 12);
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
-    return NextResponse.json(
+    await pool.query(
+      `
+      INSERT INTO sessions (user_id, token_hash, expires_at)
+      VALUES ($1, $2, $3)
+      `,
+      [newUser.id, tokenHash, expiresAt]
+    );
+
+    console.log(`[AutoSOS] Sesión creada directamente para el usuario: ${newUser.email}`);
+
+    const response = NextResponse.json(
       {
         success: true,
-        requiresVerification: true,
-        message: "Cuenta creada exitosamente. Se ha generado un código de verificación.",
-        userId: newUser.id,
+        message: "¡Cuenta creada exitosamente! Bienvenido a AutoSOS.",
         user: {
           id: newUser.id,
           name: newUser.name,
@@ -127,6 +123,17 @@ export async function POST(request: Request) {
       },
       { status: 201 }
     );
+
+    // Configurar cookie de sesión de 7 días
+    response.cookies.set("autosos_session", sessionToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      expires: expiresAt,
+      path: "/",
+    });
+
+    return response;
   } catch (error) {
     console.error("Error en registro:", error);
     return NextResponse.json(
@@ -138,3 +145,4 @@ export async function POST(request: Request) {
     );
   }
 }
+

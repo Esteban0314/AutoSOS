@@ -84,12 +84,15 @@ export default function RegisterPage() {
         return;
       }
 
-      if (data.requiresVerification && data.userId) {
-        sessionStorage.setItem("verificationUserId", data.userId.toString());
-        router.push("/verify");
-      } else {
-        router.push("/login");
-      }
+      setMessage({
+        text: "¡Registro exitoso! Iniciando tu sesión...",
+        type: "success",
+      });
+
+      // Redirección directa al perfil o panel
+      setTimeout(() => {
+        window.location.href = data.user?.role === "ADMIN" ? "/admin" : "/perfil";
+      }, 700);
     } catch (error) {
       console.error("Error en registro:", error);
       setMessage({
