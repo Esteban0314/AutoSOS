@@ -2,6 +2,37 @@ import { NextResponse } from "next/server";
 import pool from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 
+// Validación de formato de placa boliviana (RUAT / Tránsito)
+// Formatos admitidos: 3 a 4 dígitos + guión + 3 letras (ej: 4589-KTL, 982-ABC)
+function normalizeAndValidatePlate(rawPlate: string): { isValid: boolean; normalized: string; error?: string } {
+  if (!rawPlate) {
+    return { isValid: false, normalized: "", error: "La placa es obligatoria" };
+  }
+
+  let cleaned = rawPlate.toUpperCase().trim().replace(/[\s_]/g, "-");
+
+  // Si no tiene guión pero tiene el largo adecuado, insertarlo automáticamente
+  // ej: 4589KTL -> 4589-KTL, 982ABC -> 982-ABC
+  if (!cleaned.includes("-")) {
+    const match = cleaned.match(/^([0-9]{3,4})([A-Z]{3})$/);
+    if (match) {
+      cleaned = `${match[1]}-${match[2]}`;
+    }
+  }
+
+  const plateRegex = /^[1-9][0-9]{2,3}-[A-Z]{3}$/;
+
+  if (!plateRegex.test(cleaned)) {
+    return {
+      isValid: false,
+      normalized: cleaned,
+      error: "La placa no cumple el formato legal boliviano RUAT. Debe contener 3 o 4 números seguidos de 3 letras (ej. 4589-KTL o 982-ABC).",
+    };
+  }
+
+  return { isValid: true, normalized: cleaned };
+}
+
 // GET - Obtener todos los vehículos del usuario autenticado
 export async function GET() {
   try {
@@ -31,6 +62,7 @@ export async function GET() {
         fuel_type,
         transmission,
         mileage,
+        image_url,
         created_at
       FROM vehicles
       WHERE user_id = $1
@@ -81,6 +113,7 @@ export async function POST(request: Request) {
       fuel_type = "Gasolina",
       transmission = "Manual",
       mileage,
+      image_url,
     } = body;
 
     if (!plate || !brand || !model || !year || !color) {
@@ -93,12 +126,68 @@ export async function POST(request: Request) {
       );
     }
 
+    // 1. Validar placa boliviana
+    const plateValidation = normalizeAndValidatePlate(plate);
+    if (!plateValidation.isValid) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: plateValidation.error,
+        },
+        { status: 400 }
+      );
+    }
+
+    // 2. Validar rango de año
+    const currentYear = new Date().getFullYear();
+    const numericYear = parseInt(year.toString(), 10);
+    if (isNaN(numericYear) || numericYear < 1970 || numericYear > currentYear + 1) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: `El año del vehículo debe estar entre 1970 y ${currentYear + 1}`,
+        },
+        { status: 400 }
+      );
+    }
+
+    // 3. Validar kilometraje
+    let numericMileage: number | null = null;
+    if (mileage !== null && mileage !== undefined && mileage !== "") {
+      numericMileage = parseInt(mileage.toString(), 10);
+      if (isNaN(numericMileage) || numericMileage < 0 || numericMileage > 1000000) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: "El kilometraje debe ser un valor positivo válido (máximo 1,000,000 km)",
+          },
+          { status: 400 }
+        );
+      }
+    }
+
+    // 4. Validar duplicidad de placa para este usuario
+    const existingVehicle = await pool.query(
+      `SELECT id FROM vehicles WHERE user_id = $1 AND plate = $2`,
+      [user.id, plateValidation.normalized]
+    );
+
+    if (existingVehicle.rows.length > 0) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: `Ya tienes registrado un vehículo con la placa ${plateValidation.normalized} en tu garage`,
+        },
+        { status: 409 }
+      );
+    }
+
     const result = await pool.query(
       `
       INSERT INTO vehicles
-        (user_id, plate, brand, model, year, color, type, fuel_type, transmission, mileage)
+        (user_id, plate, brand, model, year, color, type, fuel_type, transmission, mileage, image_url)
       VALUES
-        ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
       RETURNING
         id,
         user_id,
@@ -111,19 +200,21 @@ export async function POST(request: Request) {
         fuel_type,
         transmission,
         mileage,
+        image_url,
         created_at
       `,
       [
         user.id,
-        plate.toUpperCase().trim(),
+        plateValidation.normalized,
         brand.trim(),
         model.trim(),
-        parseInt(year.toString(), 10),
+        numericYear,
         color.trim(),
         type,
         fuel_type,
         transmission,
-        mileage ? parseInt(mileage.toString(), 10) : null,
+        numericMileage,
+        image_url || null,
       ]
     );
 

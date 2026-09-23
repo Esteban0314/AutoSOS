@@ -8,6 +8,33 @@ interface RouteParams {
   }>;
 }
 
+function normalizeAndValidatePlate(rawPlate: string): { isValid: boolean; normalized: string; error?: string } {
+  if (!rawPlate) {
+    return { isValid: false, normalized: "", error: "La placa es obligatoria" };
+  }
+
+  let cleaned = rawPlate.toUpperCase().trim().replace(/[\s_]/g, "-");
+
+  if (!cleaned.includes("-")) {
+    const match = cleaned.match(/^([0-9]{3,4})([A-Z]{3})$/);
+    if (match) {
+      cleaned = `${match[1]}-${match[2]}`;
+    }
+  }
+
+  const plateRegex = /^[1-9][0-9]{2,3}-[A-Z]{3}$/;
+
+  if (!plateRegex.test(cleaned)) {
+    return {
+      isValid: false,
+      normalized: cleaned,
+      error: "La placa no cumple el formato legal boliviano RUAT (ej. 4589-KTL o 982-ABC).",
+    };
+  }
+
+  return { isValid: true, normalized: cleaned };
+}
+
 // DELETE - Eliminar un vehículo del usuario
 export async function DELETE(request: Request, { params }: RouteParams) {
   try {
@@ -86,7 +113,38 @@ export async function PUT(request: Request, { params }: RouteParams) {
       fuel_type,
       transmission,
       mileage,
+      image_url,
     } = body;
+
+    let normalizedPlate: string | null = null;
+    if (plate) {
+      const plateValidation = normalizeAndValidatePlate(plate);
+      if (!plateValidation.isValid) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: plateValidation.error,
+          },
+          { status: 400 }
+        );
+      }
+      normalizedPlate = plateValidation.normalized;
+    }
+
+    let numericYear: number | null = null;
+    if (year) {
+      const currentYear = new Date().getFullYear();
+      numericYear = parseInt(year.toString(), 10);
+      if (isNaN(numericYear) || numericYear < 1970 || numericYear > currentYear + 1) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: `El año debe estar entre 1970 y ${currentYear + 1}`,
+          },
+          { status: 400 }
+        );
+      }
+    }
 
     const result = await pool.query(
       `
@@ -101,20 +159,22 @@ export async function PUT(request: Request, { params }: RouteParams) {
         fuel_type = COALESCE($7, fuel_type),
         transmission = COALESCE($8, transmission),
         mileage = COALESCE($9, mileage),
+        image_url = COALESCE($10, image_url),
         updated_at = CURRENT_TIMESTAMP
-      WHERE id = $10 AND user_id = $11
+      WHERE id = $11 AND user_id = $12
       RETURNING *
       `,
       [
-        plate ? plate.toUpperCase().trim() : null,
+        normalizedPlate,
         brand ? brand.trim() : null,
         model ? model.trim() : null,
-        year ? parseInt(year.toString(), 10) : null,
+        numericYear,
         color ? color.trim() : null,
         type,
         fuel_type,
         transmission,
-        mileage ? parseInt(mileage.toString(), 10) : null,
+        mileage !== undefined && mileage !== null ? parseInt(mileage.toString(), 10) : null,
+        image_url !== undefined ? image_url : null,
         id,
         user.id,
       ]

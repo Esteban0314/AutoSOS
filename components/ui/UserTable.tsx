@@ -55,8 +55,14 @@ export default function UserTable({
             const roleBadge =
               user.role === "ADMIN"
                 ? { variant: "forest" as const, label: "Administrador" }
+                : user.role === "WORKSHOP"
+                ? { variant: "amber" as const, label: "Taller Mecánico" }
+                : user.role === "TOW"
+                ? { variant: "amber" as const, label: "Servicio de Grúa" }
+                : user.role === "PARTS_STORE"
+                ? { variant: "amber" as const, label: "Tienda de Repuestos" }
                 : user.role === "BUSINESS"
-                ? { variant: "amber" as const, label: "Negocio" }
+                ? { variant: "amber" as const, label: "Negocio General" }
                 : { variant: "sage" as const, label: "Cliente" };
 
             return (

@@ -161,23 +161,24 @@ export default function UsersClient() {
         </div>
 
         <div className="flex items-center gap-2 overflow-x-auto">
-          {["ALL", "CUSTOMER", "BUSINESS", "ADMIN"].map((role) => (
+          {[
+            { id: "ALL", label: `Todos (${users.length})` },
+            { id: "CUSTOMER", label: `Clientes (${users.filter((u) => u.role === "CUSTOMER").length})` },
+            { id: "WORKSHOP", label: `Talleres (${users.filter((u) => u.role === "WORKSHOP").length})` },
+            { id: "TOW", label: `Grúas (${users.filter((u) => u.role === "TOW").length})` },
+            { id: "PARTS_STORE", label: `Repuestos (${users.filter((u) => u.role === "PARTS_STORE").length})` },
+            { id: "ADMIN", label: `Admins (${users.filter((u) => u.role === "ADMIN").length})` },
+          ].map((item) => (
             <button
-              key={role}
-              onClick={() => setRoleFilter(role)}
+              key={item.id}
+              onClick={() => setRoleFilter(item.id)}
               className={`px-3 py-2 rounded-xl text-xs font-bold transition cursor-pointer shrink-0 ${
-                roleFilter === role
+                roleFilter === item.id
                   ? "bg-[#0C3B2E] text-white shadow-xs"
                   : "border border-[#DCE7DE] bg-white text-gray-600 hover:border-[#6D9773]"
               }`}
             >
-              {role === "ALL"
-                ? `Todos (${users.length})`
-                : role === "CUSTOMER"
-                ? `Clientes (${users.filter((u) => u.role === "CUSTOMER").length})`
-                : role === "BUSINESS"
-                ? `Negocios (${users.filter((u) => u.role === "BUSINESS").length})`
-                : `Admins (${users.filter((u) => u.role === "ADMIN").length})`}
+              {item.label}
             </button>
           ))}
         </div>

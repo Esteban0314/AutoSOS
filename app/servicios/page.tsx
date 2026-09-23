@@ -201,10 +201,20 @@ export default function ServiciosPage() {
               {/* BUSINESS MARKERS */}
               {businesses.map((business, index) => {
                 const positions = [
-                  { left: "26%", top: "32%" },
-                  { left: "72%", top: "28%" },
-                  { left: "30%", top: "72%" },
-                  { left: "76%", top: "65%" },
+                  { left: "32%", top: "28%" }, // Sopocachi
+                  { left: "74%", top: "32%" }, // Miraflores
+                  { left: "28%", top: "68%" }, // San Pedro
+                  { left: "78%", top: "62%" }, // Zona Central
+                  { left: "44%", top: "18%" }, // Calacoto 15
+                  { left: "84%", top: "44%" }, // Miraflores Busch
+                  { left: "18%", top: "48%" }, // El Alto Autopista
+                  { left: "62%", top: "78%" }, // Obrajes
+                  { left: "38%", top: "42%" }, // San Jorge
+                  { left: "52%", top: "64%" }, // Achumani
+                  { left: "72%", top: "18%" }, // Cota Cota
+                  { left: "22%", top: "32%" }, // Ciudad Satélite
+                  { left: "66%", top: "36%" }, // Los Pinos
+                  { left: "46%", top: "82%" }, // Calacoto 12
                 ];
                 const pos = positions[index % positions.length];
                 const isSelected = selectedBusiness?.id === business.id;

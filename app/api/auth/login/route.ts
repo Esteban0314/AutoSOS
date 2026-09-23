@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcrypt";
 import pool from "@/lib/db";
+import { sendVerificationCodeEmail } from "@/lib/email";
 
 export async function POST(request: Request) {
   try {
@@ -58,7 +59,7 @@ export async function POST(request: Request) {
     }
     // Generar código de 6 dígitos
     const verificationCode = Math.floor(
-    100000 + Math.random() * 900000
+      100000 + Math.random() * 900000
     ).toString();
 
     // Crear hash del código
@@ -69,21 +70,22 @@ export async function POST(request: Request) {
 
     // Guardar código
     await pool.query(
-    `
-    INSERT INTO verification_codes
+      `
+      INSERT INTO verification_codes
         (user_id, code_hash, expires_at)
-    VALUES ($1, $2, $3)
-    `,
-    [user.id, codeHash, expiresAt]
+      VALUES ($1, $2, $3)
+      `,
+      [user.id, codeHash, expiresAt]
     );
-    console.log(
-    `Código 2FA para ${user.email}: ${verificationCode}`
-    );
+
+    // Enviar código de verificación por correo electrónico
+    await sendVerificationCodeEmail(user.email, user.name, verificationCode);
+
     return NextResponse.json({
-    success: true,
-    requiresVerification: true,
-    message: "Se ha generado un código de verificación",
-    userId: user.id,
+      success: true,
+      requiresVerification: true,
+      message: "Se ha enviado un código de verificación a tu correo electrónico",
+      userId: user.id,
     });
     // No devolver la contraseña al cliente
     return NextResponse.json({

@@ -17,11 +17,12 @@ import Footer from "@/components/layout/Footer";
 import BusinessInfoRow from "@/components/ui/BusinessInfoRow";
 import Badge from "@/components/ui/Badge";
 import Card from "@/components/ui/Card";
-import { businesses } from "@/data/businesses";
+import { businesses, defaultPackages } from "@/data/businesses";
 import StoreView from "@/components/store/StoreView";
 import WorkshopView from "@/components/workshop/WorkshopView";
 import TowView from "@/components/tow/TowView";
-
+import WorkshopPackages from "@/components/workshop/WorkshopPackages";
+import SparePartsCatalog from "@/components/store/SparePartsCatalog";
 interface TallerPageProps {
   params: Promise<{
     id: string;
@@ -124,10 +125,43 @@ export default async function TallerPage({ params }: TallerPageProps) {
             </div>
           </div>
 
+<<<<<<< HEAD
           {/* VISTA ESPECIALIZADA SEGÚN EL TIPO DE NEGOCIO */}
           {business.type === "store" && <StoreView business={business} />}
           {business.type === "workshop" && <WorkshopView business={business} />}
           {business.type === "tow" && <TowView business={business} />}
+=======
+          {/* INFORMACIÓN PRINCIPAL & PANEL LATERAL */}
+          <div className="mt-8 grid gap-8 lg:grid-cols-[1.3fr_0.7fr] items-start">
+            {/* COLUMNA IZQUIERDA */}
+            <div className="space-y-6">
+              {/* PAQUETES DE MANTENIMIENTO DEL TALLER POR TAMAÑO DE AUTO */}
+              {business.type === "workshop" && (
+                <WorkshopPackages
+                  packages={business.packages || defaultPackages}
+                  workshopName={business.name}
+                  workshopPhone={business.phone}
+                  workshopWhatsapp={business.whatsapp}
+                />
+              )}
+
+              {/* CATÁLOGO DE REPUESTOS Y CARRITO DE COMPRAS PARA TIENDAS */}
+              {business.type === "store" && (
+                <SparePartsCatalog
+                  storeId={business.id}
+                  storeName={business.name}
+                  storePhone={business.phone}
+                  storeWhatsapp={business.whatsapp}
+                  storeAddress={business.address}
+                />
+              )}
+
+              {/* SERVICIOS DISPONIBLES */}
+              <Card>
+                <h2 className="text-lg font-bold text-[#0C3B2E] border-b border-gray-100 pb-3">
+                  Especialidades y Servicios
+                </h2>
+>>>>>>> e27b955 (Implementa autenticación 2FA por correo)
 
           {/* INFORMACIÓN DE CONTACTO Y UBICACIÓN FÍSICA */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -200,4 +234,4 @@ export default async function TallerPage({ params }: TallerPageProps) {
     </div>
   );
 }
-
+

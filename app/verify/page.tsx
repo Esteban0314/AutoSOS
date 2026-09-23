@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { KeyRound, AlertCircle, ArrowLeft } from "lucide-react";
+import { KeyRound, AlertCircle, ArrowLeft, RefreshCw, CheckCircle2 } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
@@ -14,7 +14,52 @@ export default function VerifyPage() {
 
   const [code, setCode] = useState("");
   const [message, setMessage] = useState("");
+  const [successInfo, setSuccessInfo] = useState("");
   const [loading, setLoading] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [countdown, setCountdown] = useState(0);
+
+  const handleResend = async () => {
+    try {
+      setResending(true);
+      setMessage("");
+      setSuccessInfo("");
+
+      const userId = sessionStorage.getItem("verificationUserId");
+      if (!userId) {
+        setMessage("Sesión expirada. Por favor vuelve a iniciar sesión.");
+        return;
+      }
+
+      const res = await fetch("/api/auth/resend-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: Number(userId) }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || "Error al reenviar el código");
+      }
+
+      setSuccessInfo("¡Nuevo código enviado con éxito a tu correo!");
+      setCountdown(60);
+      const timer = setInterval(() => {
+        setCountdown((prev) => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    } catch (err) {
+      console.error(err);
+      setMessage(err instanceof Error ? err.message : "Error reenviando código");
+    } finally {
+      setResending(false);
+    }
+  };
 
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -118,6 +163,14 @@ export default function VerifyPage() {
               />
             </div>
 
+            {/* Success Message */}
+            {successInfo && (
+              <div className="flex items-center gap-2 rounded-xl bg-emerald-50 p-3.5 text-xs font-semibold text-emerald-800 border border-emerald-200 animate-enter-scale">
+                <CheckCircle2 size={16} className="shrink-0 text-emerald-600" />
+                <span>{successInfo}</span>
+              </div>
+            )}
+
             {/* Error Message */}
             {message && (
               <div className="flex items-center gap-2 rounded-xl bg-red-50 p-3.5 text-xs font-semibold text-red-700 border border-red-200 animate-enter-scale">
@@ -137,6 +190,25 @@ export default function VerifyPage() {
             >
               Verificar código
             </Button>
+
+            {/* Reenviar código */}
+            <div className="text-center pt-2">
+              <button
+                type="button"
+                onClick={handleResend}
+                disabled={resending || countdown > 0}
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#6D9773] hover:text-[#0C3B2E] transition disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
+              >
+                <RefreshCw size={13} className={resending ? "animate-spin" : ""} />
+                <span>
+                  {countdown > 0
+                    ? `Reenviar código en ${countdown}s`
+                    : resending
+                    ? "Enviando nuevo código..."
+                    : "¿No recibiste el código? Reenviar al correo"}
+                </span>
+              </button>
+            </div>
           </form>
 
           <div className="mt-6 pt-4 border-t border-gray-100 text-center">
