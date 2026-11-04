@@ -14,6 +14,7 @@ import Badge from "@/components/ui/Badge";
 import Navbar from "@/components/layout/Navbare";
 import Footer from "@/components/layout/Footer";
 import VehiclesManager from "@/components/profile/VehiclesManager";
+import ChangePasswordCard from "@/components/profile/ChangePasswordCard";
 
 export default async function PerfilPage() {
   let user;
@@ -133,6 +134,9 @@ export default async function PerfilPage() {
               </div>
             </div>
           </Card>
+
+          {/* SEGURIDAD Y CAMBIO DE CONTRASEÑA */}
+          <ChangePasswordCard />
 
           {/* MIS VEHÍCULOS / GARAGE REAL CRUD */}
           <VehiclesManager />

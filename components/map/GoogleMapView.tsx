@@ -136,13 +136,13 @@ export default function GoogleMapView({
         const left = x * tileSize - (centerPoint.x - width / 2);
         const top = y * tileSize - (centerPoint.y - height / 2);
 
-        // CartoDB Voyager reproduce con fidelidad los colores pastel y trazos de Google Maps
-        const subdomains = ["a", "b", "c", "d"];
-        const s = subdomains[(x + y) % subdomains.length];
+        // Mosaicos de alta fidelidad sin requerimiento de API Key:
+        // - Streets: ESRI World Street Map (estética limpia y clara idéntica a Google Maps)
+        // - Satellite: ESRI World Imagery (fotografía aérea de alta resolución)
         const tileUrl =
           mapType === "satellite"
             ? `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${zoom}/${y}/${x}`
-            : `https://${s}.basemaps.cartocdn.com/rastertiles/voyager/${zoom}/${x}/${y}.png`;
+            : `https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/${zoom}/${y}/${x}`;
 
         tiles.push({ x, y, left, top, url: tileUrl });
       }
@@ -173,6 +173,13 @@ export default function GoogleMapView({
             key={`${tile.x}-${tile.y}-${zoom}-${mapType}`}
             src={tile.url}
             alt="Map Tile"
+            onError={(e) => {
+              // Respaldo instantáneo con OpenStreetMap en caso de cualquier micro-corte
+              const target = e.currentTarget;
+              if (!target.src.includes("openstreetmap.org")) {
+                target.src = `https://tile.openstreetmap.org/${zoom}/${tile.x}/${tile.y}.png`;
+              }
+            }}
             style={{
               position: "absolute",
               left: `${tile.left}px`,

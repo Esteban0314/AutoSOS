@@ -8,15 +8,18 @@ import {
   Zap,
   ShieldAlert,
   ShieldCheck,
-  CheckCircle2,
   AlertTriangle,
-  Flame,
   Wrench,
   Sparkles,
   RefreshCw,
   Clock,
   DollarSign,
   PhoneCall,
+  Flame,
+  Gauge,
+  CheckCircle2,
+  AlertCircle,
+  HelpCircle,
 } from "lucide-react";
 import Navbar from "@/components/layout/Navbare";
 import Footer from "@/components/layout/Footer";
@@ -43,6 +46,8 @@ interface DiagnosisData {
   immediateSteps: string[];
   recommendedSpecialties: string[];
   matchedBusinesses: Business[];
+  engineUsed?: string;
+  altitudeNote?: string;
 }
 
 export default function DiagnosticoPage() {
@@ -58,8 +63,7 @@ export default function DiagnosticoPage() {
   const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>([]);
   const [customText, setCustomText] = useState("");
 
-  const [scanProgress, setScanProgress] = useState(0);
-  const [scanLog, setScanLog] = useState("Iniciando escaneo de módulos...");
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [diagnosisResult, setDiagnosisResult] = useState<DiagnosisData | null>(null);
 
   const categories = [
@@ -68,10 +72,10 @@ export default function DiagnosticoPage() {
       name: "Motor y Combustión",
       icon: <Wrench size={18} />,
       symptoms: [
-        "El motor cascabelea al acelerar",
-        "Testigo Check Engine encendido",
-        "Pérdida de potencia en subidas",
-        "El auto tiembla en ralentí",
+        "El motor cascabelea al acelerar en subidas",
+        "Testigo Check Engine encendido en el tablero",
+        "Pérdida notoria de potencia y respuesta",
+        "El auto tiembla o vibra en ralentí",
       ],
     },
     {
@@ -79,10 +83,10 @@ export default function DiagnosticoPage() {
       name: "Frenos y Suspensión",
       icon: <ShieldAlert size={18} />,
       symptoms: [
-        "Chirrido agudo al presionar el freno",
+        "Chirrido agudo al presionar el pedal de freno",
         "El pedal se va hasta el fondo (esponjoso)",
-        "El volante vibra a más de 70 km/h",
-        "Golpeteo seco al pasar baches",
+        "El volante vibra fuertemente a más de 60 km/h",
+        "Golpeteo seco metálico al pasar baches",
       ],
     },
     {
@@ -90,23 +94,44 @@ export default function DiagnosticoPage() {
       name: "Batería y Sistema Eléctrico",
       icon: <Zap size={18} />,
       symptoms: [
-        "No da arranque y hace clic repetitivo",
-        "Luces delanteras tenues o parpadeantes",
-        "La batería tiene menos de 1 año y se descarga",
-        "Testigo de batería en el tablero",
+        "No arranca por las mañanas y hace clic repetitivo",
+        "Luces delanteras tenues o parpadeantes al acelerar",
+        "Testigo de batería encendido con el motor en marcha",
+        "Batería se descarga tras 2 días sin usar",
       ],
     },
     {
       id: "cooling" as DiagnosisCategory,
-      name: "Temperatura y Escape",
+      name: "Temperatura y Radiador",
       icon: <Flame size={18} />,
       symptoms: [
-        "Aguja de temperatura sube al máximo",
-        "Humo blanco o azul en el escape",
-        "Olor a refrigerante dulce dentro de la cabina",
-        "Fuga de líquido verde/rosa debajo del auto",
+        "Aguja de temperatura sube por encima de la mitad",
+        "Vapor o humo blanco saliendo por el capó",
+        "Goteo de líquido refrigerante bajo el motor",
+        "El electroventilador no enciende en tráfico lento",
       ],
     },
+    {
+      id: "transmission" as DiagnosisCategory,
+      name: "Embrague y Transmisión",
+      icon: <Gauge size={18} />,
+      symptoms: [
+        "El motor se revoluciona en subidas pero el auto no avanza (patina)",
+        "Dificultad para engranar 1ra marcha o reversa",
+        "Tirones o demora al pasar cambios en caja automática",
+        "Zumbido o chillido con el pedal de embrague pisado",
+      ],
+    },
+  ];
+
+  const quickSuggestions = [
+    "Cascabeleo en subidas de La Paz y pérdida de potencia",
+    "Chirrido de frenos y pedal esponjoso al fondo",
+    "No arranca en frío matutino (clic-clic)",
+    "Código OBD-II P0300 (Falla múltiple en cilindros)",
+    "Embrague patina en pendientes empinadas",
+    "Humo negro por el escape y olor a gasolina",
+    "Vibración en el volante al frenar a más de 70 km/h",
   ];
 
   const toggleSymptom = (symptom: string) => {
@@ -117,13 +142,18 @@ export default function DiagnosticoPage() {
     }
   };
 
+  // DIAGNÓSTICO REAL SIN SIMULACIONES NI SETTIMEOUT FALSOS
   const startDiagnosis = async () => {
+    if (selectedSymptoms.length === 0 && !customText.trim()) {
+      setErrorMessage("Por favor selecciona al menos un síntoma o escribe lo que le pasa a tu auto en el cuadro de texto.");
+      return;
+    }
+
+    setErrorMessage(null);
     setStep("scanning");
-    setScanProgress(10);
-    setScanLog("Conectando con el motor de inferencia AutoSOS AI...");
 
     try {
-      const fetchPromise = fetch("/api/diagnosis", {
+      const response = await fetch("/api/diagnosis", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -134,34 +164,18 @@ export default function DiagnosticoPage() {
         }),
       });
 
-      // Animación de escaneo
-      setTimeout(() => {
-        setScanProgress(45);
-        setScanLog("Decodificando patrones mecánicos y sensores virtuales...");
-      }, 700);
-
-      setTimeout(() => {
-        setScanProgress(80);
-        setScanLog("Evaluando histórico de fallas y bases de conocimiento...");
-      }, 1400);
-
-      const response = await fetchPromise;
       const data = await response.json();
 
-      setTimeout(() => {
-        setScanProgress(100);
-        setScanLog("¡Diagnóstico generado con éxito!");
-        if (data.success && data.diagnosis) {
-          setDiagnosisResult(data.diagnosis);
-          setStep("result");
-        } else {
-          alert("No se pudo procesar el diagnóstico. Inténtalo nuevamente.");
-          setStep("input");
-        }
-      }, 2000);
+      if (data.success && data.diagnosis) {
+        setDiagnosisResult(data.diagnosis);
+        setStep("result");
+      } else {
+        setErrorMessage(data.message || "No se pudo generar el diagnóstico. Por favor intenta nuevamente.");
+        setStep("input");
+      }
     } catch (error) {
-      console.error(error);
-      alert("Error al conectar con el asistente de IA.");
+      console.error("Error en diagnóstico:", error);
+      setErrorMessage("Error de conexión al procesar el diagnóstico. Verifica tu conexión a internet.");
       setStep("input");
     }
   };
@@ -170,6 +184,7 @@ export default function DiagnosticoPage() {
     setDiagnosisResult(null);
     setSelectedSymptoms([]);
     setCustomText("");
+    setErrorMessage(null);
     setStep("input");
   };
 
@@ -189,7 +204,7 @@ export default function DiagnosticoPage() {
           <div className="relative z-10 mx-auto max-w-5xl text-center">
             <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3.5 py-1 text-xs font-semibold text-[#E8F0E9] border border-white/20 backdrop-blur-md mb-4 shadow-sm">
               <Sparkles size={14} className="text-[#FFBA00] animate-pulse" />
-              <span>AutoSOS Neural Diagnostic Engine v2.4</span>
+              <span>Motor de Inteligencia Artificial Automotriz</span>
             </div>
 
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight">
@@ -197,13 +212,21 @@ export default function DiagnosticoPage() {
             </h1>
 
             <p className="mt-3 text-sm sm:text-base text-gray-300 max-w-2xl mx-auto leading-relaxed">
-              Describe los ruidos, vibraciones o comportamientos anómalos de tu auto para recibir una evaluación técnica inmediata, costos estimados y talleres recomendados.
+              Describe los ruidos, vibraciones, fallas o códigos OBD-II de tu vehículo para obtener un análisis técnico detallado, costos en Bolivianos (Bs.) y talleres certificados en La Paz.
             </p>
           </div>
         </section>
 
         {/* PROCESO / PASOS */}
         <section className="mx-auto max-w-5xl px-4 sm:px-6 py-10">
+          {/* MENSAJE DE ERROR SI OCURRE */}
+          {errorMessage && (
+            <div className="mb-6 flex items-center gap-3 rounded-2xl bg-red-50 p-4 border border-red-200 text-xs text-red-700 animate-enter-scale">
+              <AlertCircle size={18} className="shrink-0 text-red-600" />
+              <span className="font-semibold">{errorMessage}</span>
+            </div>
+          )}
+
           {/* PASO 1: ENTRADA DE DATOS */}
           {step === "input" && (
             <div className="space-y-8 animate-enter-scale">
@@ -218,7 +241,7 @@ export default function DiagnosticoPage() {
                       1. Datos de tu Vehículo
                     </h3>
                     <p className="text-xs text-gray-500">
-                      Ayuda a la IA a calibrar las tolerancias mecánicas específicas de tu modelo
+                      Permite a la IA calibrar las tolerancias mecánicas y altitud geográfica
                     </p>
                   </div>
                 </div>
@@ -276,13 +299,13 @@ export default function DiagnosticoPage() {
                       2. Identifica los Síntomas o Fallas
                     </h3>
                     <p className="text-xs text-gray-500">
-                      Selecciona una categoría y marca los síntomas observados
+                      Selecciona una categoría o escribe directamente los síntomas
                     </p>
                   </div>
                 </div>
 
                 {/* Categorías tabs */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
                   {categories.map((cat) => (
                     <button
                       key={cat.id}
@@ -305,48 +328,72 @@ export default function DiagnosticoPage() {
                   ))}
                 </div>
 
-                {/* Chips de síntomas */}
-                <div className="space-y-2 mb-6">
-                  <label className="block text-xs font-bold uppercase tracking-wider text-gray-600">
-                    Síntomas frecuentes detectados:
-                  </label>
-                  <div className="flex flex-wrap gap-2.5">
+                {/* Lista de síntomas para la categoría seleccionada */}
+                <div className="mb-6">
+                  <h4 className="text-xs font-bold text-gray-600 uppercase tracking-wider mb-3">
+                    Síntomas frecuentes en esta categoría (marca los que observes):
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {categories
                       .find((c) => c.id === selectedCategory)
-                      ?.symptoms.map((symptom, i) => {
+                      ?.symptoms.map((symptom, idx) => {
                         const isSelected = selectedSymptoms.includes(symptom);
                         return (
-                          <button
-                            key={i}
-                            type="button"
+                          <div
+                            key={idx}
                             onClick={() => toggleSymptom(symptom)}
-                            className={`flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-semibold transition-all cursor-pointer border ${
+                            className={`flex items-center gap-3 p-3.5 rounded-xl border text-xs font-medium cursor-pointer transition-all ${
                               isSelected
-                                ? "bg-[#E8F0E9] border-[#6D9773] text-[#0C3B2E] shadow-xs"
-                                : "bg-white border-[#DCE7DE] text-gray-600 hover:border-gray-400"
+                                ? "border-[#6D9773] bg-[#E8F0E9] text-[#0C3B2E] font-bold shadow-xs"
+                                : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
                             }`}
                           >
-                            <CheckCircle2
-                              size={14}
-                              className={isSelected ? "text-[#6D9773]" : "text-gray-300"}
-                            />
+                            <div
+                              className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border ${
+                                isSelected
+                                  ? "border-[#6D9773] bg-[#6D9773] text-white"
+                                  : "border-gray-300 bg-white"
+                              }`}
+                            >
+                              {isSelected && <CheckCircle2 size={14} />}
+                            </div>
                             <span>{symptom}</span>
-                          </button>
+                          </div>
                         );
                       })}
                   </div>
                 </div>
 
-                {/* Detalle libre */}
+                {/* Sugerencias Rápidas */}
+                <div className="mb-5">
+                  <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                    <HelpCircle size={13} className="text-[#6D9773]" />
+                    <span>Ejemplos y casos comunes (haz clic para autocompletar):</span>
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {quickSuggestions.map((sug, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => setCustomText(sug)}
+                        className="rounded-full bg-[#F0F5F1] px-3 py-1 text-[11px] font-semibold text-[#0C3B2E] hover:bg-[#0C3B2E] hover:text-white transition cursor-pointer border border-[#DCE7DE]"
+                      >
+                        + {sug}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Descripción Libre / Códigos OBD-II */}
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1.5">
-                    ¿Algo más que desees agregar? (Opcional)
+                    ¿Algo más que notes? Describe ruidos, olores o ingresa códigos OBD-II (ej. P0300, P0420):
                   </label>
                   <textarea
                     rows={3}
                     value={customText}
                     onChange={(e) => setCustomText(e.target.value)}
-                    placeholder="Ej. Ocurre especialmente por las mañanas al encender el auto con el clima frío..."
+                    placeholder="Ej. Siento un tirón al pasar a segunda marcha y cuando subo la autopista empieza a salir humo negro..."
                     className="w-full rounded-xl border border-[#DCE7DE] bg-white p-3.5 text-xs text-[#0C3B2E] outline-none focus:border-[#6D9773] focus:ring-2 focus:ring-[#6D9773]/20 resize-none"
                   />
                 </div>
@@ -359,18 +406,17 @@ export default function DiagnosticoPage() {
                     onClick={startDiagnosis}
                     className="font-extrabold shadow-md hover:shadow-[#FFBA00]/30 w-full sm:w-auto"
                   >
-                    Generar Diagnóstico IA
+                    Generar Diagnóstico con IA
                   </Button>
                 </div>
               </Card>
             </div>
           )}
 
-          {/* PASO 2: ESCANEO Y PROCESAMIENTO EN VIVO */}
+          {/* PASO 2: ANÁLISIS EN VIVO (SIN RETARDOS FALSOS) */}
           {step === "scanning" && (
             <div className="flex flex-col items-center justify-center p-12 sm:p-20 text-center animate-enter-scale">
               <div className="relative mb-8">
-                {/* Ondas pulsantes */}
                 <div className="absolute inset-0 rounded-full bg-[#6D9773]/30 animate-ping" />
                 <div className="relative flex h-28 w-28 items-center justify-center rounded-full bg-gradient-to-br from-[#0C3B2E] to-[#145341] text-[#FFBA00] shadow-2xl border-4 border-white">
                   <Brain size={48} className="animate-pulse" />
@@ -378,22 +424,17 @@ export default function DiagnosticoPage() {
               </div>
 
               <h2 className="text-2xl font-extrabold text-[#0C3B2E]">
-                Analizando Telemetría de {brand} {model}...
+                Analizando {brand} {model} ({year})...
               </h2>
 
               <p className="mt-2 text-xs text-gray-500 max-w-md">
-                {scanLog}
+                Evaluando parámetros mecánicos, tolerancia en altitud (3,600 msnm) y bases técnicas especializadas...
               </p>
 
-              {/* Barra de progreso */}
-              <div className="mt-8 w-full max-w-md bg-gray-200 h-2.5 rounded-full overflow-hidden p-0.5 border border-gray-300">
-                <div
-                  className="bg-gradient-to-r from-[#6D9773] to-[#FFBA00] h-full rounded-full transition-all duration-500 ease-out"
-                  style={{ width: `${scanProgress}%` }}
-                />
+              <div className="mt-8 flex items-center gap-2 text-xs font-semibold text-[#6D9773]">
+                <div className="h-2 w-2 rounded-full bg-[#6D9773] animate-ping" />
+                <span>Procesando diagnóstico en tiempo real...</span>
               </div>
-
-              <span className="mt-3 text-xs font-bold text-[#6D9773]">{scanProgress}% Completado</span>
             </div>
           )}
 
@@ -408,7 +449,7 @@ export default function DiagnosticoPage() {
                       <Brain size={26} />
                     </div>
                     <div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
                         <Badge
                           variant={
                             diagnosisResult.severity === "CRITICAL"
@@ -427,6 +468,12 @@ export default function DiagnosticoPage() {
                         <span className="text-xs text-gray-300">
                           Precisión: {diagnosisResult.confidence}%
                         </span>
+
+                        {diagnosisResult.engineUsed && (
+                          <span className="rounded-full bg-white/10 px-2.5 py-0.5 text-[10px] font-bold text-[#FFBA00] border border-white/15">
+                            {diagnosisResult.engineUsed}
+                          </span>
+                        )}
                       </div>
 
                       <h2 className="mt-1 text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
@@ -450,6 +497,13 @@ export default function DiagnosticoPage() {
                   {diagnosisResult.summary}
                 </p>
 
+                {diagnosisResult.altitudeNote && (
+                  <div className="mt-4 inline-flex items-center gap-2 rounded-xl bg-white/10 px-3 py-1.5 text-xs text-[#E8F0E9] border border-white/15">
+                    <span className="text-[#FFBA00] font-bold">🏔️ Factor Altitud:</span>
+                    <span>{diagnosisResult.altitudeNote}</span>
+                  </div>
+                )}
+
                 {/* Métricas estimadas */}
                 <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="rounded-2xl bg-white/10 backdrop-blur-md p-4 border border-white/15">
@@ -461,7 +515,7 @@ export default function DiagnosticoPage() {
                       {diagnosisResult.estimatedCost}
                     </p>
                     <p className="text-[11px] text-gray-300 mt-0.5">
-                      Incluye repuestos base y mano de obra promedio en Bolivia
+                      Incluye repuestos sugeridos y mano de obra promedio en La Paz
                     </p>
                   </div>
 
@@ -471,10 +525,10 @@ export default function DiagnosticoPage() {
                       <span>Tiempo Estimado en Taller</span>
                     </div>
                     <p className="mt-1.5 text-2xl font-extrabold text-white">
-                      2 a 4 Horas
+                      2 a 5 Horas
                     </p>
                     <p className="text-[11px] text-gray-300 mt-0.5">
-                      Dependiendo de la disponibilidad inmediata de repuestos
+                      Sujeto a inspección física en bahía y disponibilidad de stock
                     </p>
                   </div>
                 </div>
@@ -508,7 +562,7 @@ export default function DiagnosticoPage() {
                 <Card>
                   <h3 className="text-base font-bold text-[#0C3B2E] border-b border-gray-100 pb-3 mb-4 flex items-center gap-2">
                     <ShieldCheck size={18} className="text-[#6D9773]" />
-                    <span>Recomendaciones Preventivas</span>
+                    <span>Recomendaciones Técnicas y de Seguridad</span>
                   </h3>
 
                   <ul className="space-y-3">
@@ -529,7 +583,7 @@ export default function DiagnosticoPage() {
                         <span>¡Alerta Crítica! No continúes conduciendo</span>
                       </div>
                       <p className="text-[11px] text-red-600 mt-1">
-                        Existe alto riesgo de daño irreversible al motor o pérdida de frenos. Se recomienda solicitar grúa de auxilio.
+                        Existe alto riesgo de daño irreversible al motor o pérdida de frenos. Se recomienda solicitar auxilio de grúa.
                       </p>
                       <a href="tel:+59170000000" className="inline-block mt-3 w-full">
                         <Button variant="danger" fullWidth size="sm" icon={<PhoneCall size={14} />}>
@@ -546,10 +600,10 @@ export default function DiagnosticoPage() {
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <h3 className="text-lg font-bold text-[#0C3B2E]">
-                      Talleres y Especialistas Recomendados
+                      Talleres y Especialistas Recomendados en La Paz
                     </h3>
                     <p className="text-xs text-gray-500">
-                      Establecimientos certificados para solucionar esta falla en tu zona
+                      Establecimientos certificados para solucionar esta falla técnica en tu zona
                     </p>
                   </div>
 

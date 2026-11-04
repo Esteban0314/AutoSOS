@@ -249,7 +249,7 @@ export default function StoreView({ business }: StoreViewProps) {
                   </div>
 
                   <Button
-                    variant={isJustAdded ? "success" : inCart ? "secondary" : "yellow"}
+                    variant={isJustAdded ? "primary" : inCart ? "dark" : "yellow"}
                     size="sm"
                     icon={
                       isJustAdded ? (

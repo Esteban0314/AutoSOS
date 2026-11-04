@@ -103,6 +103,11 @@ export function AuthProvider({
     }
 
     setUser(null);
+
+    // Redirección inmediata a la página principal con recarga limpia
+    if (typeof window !== "undefined") {
+      window.location.href = "/";
+    }
   };
 
   return (

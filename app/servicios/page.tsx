@@ -20,6 +20,7 @@ import Footer from "@/components/layout/Footer";
 import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 import { businesses, Business } from "@/data/businesses";
+import GoogleMapView from "@/components/map/GoogleMapView";
 
 export default function ServiciosPage() {
   const [activeCategory, setActiveCategory] = useState<"all" | BusinessType>("all");
@@ -148,162 +149,13 @@ export default function ServiciosPage() {
 
           {/* MAPA + RESULTADOS */}
           <div className="grid gap-8 lg:grid-cols-[1.15fr_0.85fr] items-start">
-            {/* MAPA INTERACTIVO SIMULADO */}
-            <div className="sticky top-20 rounded-3xl overflow-hidden border border-[#DCE7DE] bg-[#DCE7DE]/90 shadow-lg min-h-[580px] relative">
-              {/* Topographic Background Simulation */}
-              <div className="absolute inset-0 bg-[#E0EBE2] opacity-80" />
-
-              {/* Map grid streets */}
-              <div className="absolute inset-0 opacity-40 pointer-events-none">
-                <div className="absolute left-[18%] top-0 h-full w-[4px] rotate-[18deg] bg-white shadow-sm" />
-                <div className="absolute left-[48%] top-0 h-full w-[6px] -rotate-[12deg] bg-white shadow-sm" />
-                <div className="absolute left-[78%] top-0 h-full w-[4px] rotate-[22deg] bg-white shadow-sm" />
-                <div className="absolute left-0 top-[28%] h-[5px] w-full rotate-[6deg] bg-white shadow-sm" />
-                <div className="absolute left-0 top-[62%] h-[4px] w-full -rotate-[5deg] bg-white shadow-sm" />
-                <div className="absolute left-0 top-[80%] h-[3px] w-full rotate-[12deg] bg-white shadow-sm" />
-              </div>
-
-              {/* Top Floating Map Info Bar */}
-              <div className="absolute left-4 top-4 right-4 z-20 flex items-center justify-between gap-3 rounded-2xl bg-white/95 px-4 py-3 shadow-md backdrop-blur-md border border-white/40">
-                <div className="flex items-center gap-2.5">
-                  <div className="flex h-3 w-3 relative">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#6D9773] opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-3 w-3 bg-[#6D9773]"></span>
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                      MAPA DE COBERTURA EN VIVO
-                    </p>
-                    <p className="text-xs font-bold text-[#0C3B2E]">
-                      {filteredBusinesses.length} servicios detectados
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-1.5 text-xs text-gray-500 font-semibold">
-                  <span className="hidden sm:inline">Haz clic en un marcador</span>
-                </div>
-              </div>
-
-              {/* USER LOCATION MARKER */}
-              <div
-                className="absolute left-[48%] top-[50%] -translate-x-1/2 -translate-y-1/2 z-10 cursor-pointer group"
-                title="Tu ubicación actual"
-              >
-                <div className="relative flex items-center justify-center">
-                  <div className="absolute h-14 w-14 rounded-full bg-[#FFBA00]/30 animate-pulse-gold-radar" />
-                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#FFBA00] border-4 border-white shadow-xl">
-                    <Navigation size={18} className="text-[#0C3B2E] fill-[#0C3B2E]" />
-                  </div>
-                </div>
-              </div>
-
-              {/* BUSINESS MARKERS */}
-              {businesses.map((business, index) => {
-                const positions = [
-                  { left: "32%", top: "28%" }, // Sopocachi
-                  { left: "74%", top: "32%" }, // Miraflores
-                  { left: "28%", top: "68%" }, // San Pedro
-                  { left: "78%", top: "62%" }, // Zona Central
-                  { left: "44%", top: "18%" }, // Calacoto 15
-                  { left: "84%", top: "44%" }, // Miraflores Busch
-                  { left: "18%", top: "48%" }, // El Alto Autopista
-                  { left: "62%", top: "78%" }, // Obrajes
-                  { left: "38%", top: "42%" }, // San Jorge
-                  { left: "52%", top: "64%" }, // Achumani
-                  { left: "72%", top: "18%" }, // Cota Cota
-                  { left: "22%", top: "32%" }, // Ciudad Satélite
-                  { left: "66%", top: "36%" }, // Los Pinos
-                  { left: "46%", top: "82%" }, // Calacoto 12
-                ];
-                const pos = positions[index % positions.length];
-                const isSelected = selectedBusiness?.id === business.id;
-
-                return (
-                  <button
-                    key={business.id}
-                    onClick={() => setSelectedBusiness(business)}
-                    style={{ left: pos.left, top: pos.top }}
-                    className={`absolute -translate-x-1/2 -translate-y-1/2 z-10 transition-all duration-300 cursor-pointer group ${
-                      isSelected ? "scale-125 z-30" : "hover:scale-110"
-                    }`}
-                  >
-                    <div className="relative flex items-center justify-center">
-                      <div
-                        className={`absolute h-12 w-12 rounded-full ${
-                          isSelected ? "bg-[#6D9773]/40 animate-pulse-radar" : ""
-                        }`}
-                      />
-                      <div
-                        className={`flex h-10 w-10 items-center justify-center rounded-2xl border-2 border-white shadow-lg transition-colors ${
-                          isSelected
-                            ? "bg-[#0C3B2E] text-[#FFBA00]"
-                            : "bg-[#6D9773] text-white group-hover:bg-[#0C3B2E]"
-                        }`}
-                      >
-                        {business.type === "workshop" && <Wrench size={17} />}
-                        {business.type === "tow" && <Truck size={17} />}
-                        {business.type === "store" && <Store size={17} />}
-                      </div>
-                    </div>
-                  </button>
-                );
-              })}
-
-              {/* FLOATING SELECTED BUSINESS PREVIEW MODAL ON MAP */}
-              {selectedBusiness && (
-                <div className="absolute bottom-4 left-4 right-4 z-20 animate-enter-scale">
-                  <div className="rounded-2xl border border-white/40 bg-white/95 p-4 shadow-2xl backdrop-blur-md">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#0C3B2E] text-[#FFBA00] shadow-md">
-                          {selectedBusiness.type === "workshop" && <Wrench size={22} />}
-                          {selectedBusiness.type === "tow" && <Truck size={22} />}
-                          {selectedBusiness.type === "store" && <Store size={22} />}
-                        </div>
-
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs font-bold text-[#6D9773]">
-                              {selectedBusiness.type === "workshop"
-                                ? "Taller mecánico"
-                                : selectedBusiness.type === "tow"
-                                ? "Servicio de grúa"
-                                : "Tienda de repuestos"}
-                            </span>
-                            <span className="text-gray-300">•</span>
-                            <span className="flex items-center gap-1 text-xs font-bold text-[#FFBA00]">
-                              <Star size={13} fill="#FFBA00" />
-                              {selectedBusiness.rating}
-                            </span>
-                          </div>
-
-                          <h3 className="text-base font-bold text-[#0C3B2E]">
-                            {selectedBusiness.name}
-                          </h3>
-                        </div>
-                      </div>
-
-                      <Link href={`/taller/${selectedBusiness.id}`}>
-                        <Button variant="yellow" size="sm" icon={<ArrowRight size={14} />}>
-                          Ver taller
-                        </Button>
-                      </Link>
-                    </div>
-
-                    <div className="mt-3 flex items-center justify-between text-xs text-gray-500 border-t border-gray-100 pt-2.5">
-                      <span className="flex items-center gap-1">
-                        <MapPin size={13} className="text-[#6D9773]" />
-                        {selectedBusiness.address}
-                      </span>
-
-                      <span className="font-semibold text-[#0C3B2E]">
-                        {selectedBusiness.distance} de ti
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              )}
+            {/* MAPA INTERACTIVO ESTILO GOOGLE MAPS */}
+            <div className="sticky top-20">
+              <GoogleMapView
+                businesses={filteredBusinesses}
+                selectedBusiness={selectedBusiness}
+                onSelectBusiness={setSelectedBusiness}
+              />
             </div>
 
             {/* LISTA DE RESULTADOS */}

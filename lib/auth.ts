@@ -58,7 +58,9 @@ export async function getCurrentUser() {
 }
 
 
-// Usuario autenticado
+export type UserRole = "CUSTOMER" | "ADMIN" | "WORKSHOP" | "TOW" | "PARTS_STORE";
+
+// 1. Usuario autenticado en general (cualquier rol)
 export async function requireAuth() {
   const user = await getCurrentUser();
 
@@ -69,18 +71,23 @@ export async function requireAuth() {
   return user;
 }
 
-
-// Solo administradores
-export async function requireAdmin() {
+// 2. Validación de roles en general (admite una lista de roles permitidos)
+export async function requireRole(allowedRoles: UserRole[]) {
   const user = await getCurrentUser();
 
   if (!user) {
-    throw new Error("UNAUTHORIZED");
+    throw new Error("UNAUTHORIZED"); // 401: No ha iniciado sesión
   }
 
-  if (user.role !== "ADMIN") {
-    throw new Error("FORBIDDEN");
+  // Verifica si el rol del usuario está dentro de los roles autorizados
+  if (!allowedRoles.includes(user.role as UserRole)) {
+    throw new Error("FORBIDDEN");    // 403: Autenticado, pero sin permiso
   }
 
   return user;
+}
+
+// 3. Caso específico: Solo Administradores
+export async function requireAdmin() {
+  return requireRole(["ADMIN"]);
 }
