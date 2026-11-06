@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Brain,
@@ -20,6 +20,10 @@ import {
   CheckCircle2,
   AlertCircle,
   HelpCircle,
+  Plus,
+  Check,
+  ExternalLink,
+  X,
 } from "lucide-react";
 import Navbar from "@/components/layout/Navbare";
 import Footer from "@/components/layout/Footer";
@@ -30,6 +34,21 @@ import BusinessCard from "@/components/ui/BusinessCard";
 import { Business } from "@/data/businesses";
 
 type DiagnosisCategory = "motor" | "brakes" | "electrical" | "cooling" | "transmission";
+
+interface VehicleItem {
+  id: number;
+  user_id?: number;
+  plate: string;
+  brand: string;
+  model: string;
+  year: number;
+  color: string;
+  type?: string;
+  fuel_type: string | null;
+  transmission: string | null;
+  mileage: number | null;
+  image_url?: string | null;
+}
 
 interface DiagnosisData {
   title: string;
@@ -53,18 +72,73 @@ interface DiagnosisData {
 export default function DiagnosticoPage() {
   const [step, setStep] = useState<"input" | "scanning" | "result">("input");
 
-  // Datos del vehículo
+  // Vehículos del usuario desde la BD
+  const [userVehicles, setUserVehicles] = useState<VehicleItem[]>([]);
+  const [selectedVehicleId, setSelectedVehicleId] = useState<number | "manual">("manual");
+  const [loadingVehicles, setLoadingVehicles] = useState<boolean>(true);
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+
+  // Datos del vehículo para el diagnóstico
   const [brand, setBrand] = useState("Toyota");
   const [model, setModel] = useState("Corolla / Hilux");
   const [year, setYear] = useState("2018");
+  const [fuelType, setFuelType] = useState("Gasolina");
+  const [selectedPlate, setSelectedPlate] = useState<string | null>(null);
 
-  // Selección de síntomas
+  // Selección de síntomas (se acumulan entre todas las categorías)
   const [selectedCategory, setSelectedCategory] = useState<DiagnosisCategory>("motor");
   const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>([]);
   const [customText, setCustomText] = useState("");
 
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [diagnosisResult, setDiagnosisResult] = useState<DiagnosisData | null>(null);
+
+  // Cargar vehículos registrados del usuario autenticado
+  useEffect(() => {
+    async function fetchVehicles() {
+      try {
+        setLoadingVehicles(true);
+        const res = await fetch("/api/vehicles");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && Array.isArray(data.vehicles) && data.vehicles.length > 0) {
+            setIsLoggedIn(true);
+            setUserVehicles(data.vehicles);
+            // Preseleccionar automáticamente el primer vehículo registrado del usuario
+            const firstVeh: VehicleItem = data.vehicles[0];
+            setSelectedVehicleId(firstVeh.id);
+            setBrand(firstVeh.brand);
+            setModel(firstVeh.model);
+            setYear(String(firstVeh.year));
+            setSelectedPlate(firstVeh.plate);
+            if (firstVeh.fuel_type) setFuelType(firstVeh.fuel_type);
+          } else if (data.success) {
+            setIsLoggedIn(true);
+          }
+        }
+      } catch (err) {
+        console.error("Error al cargar vehículos:", err);
+      } finally {
+        setLoadingVehicles(false);
+      }
+    }
+
+    fetchVehicles();
+  }, []);
+
+  const handleSelectVehicle = (veh: VehicleItem) => {
+    setSelectedVehicleId(veh.id);
+    setBrand(veh.brand);
+    setModel(veh.model);
+    setYear(String(veh.year));
+    setSelectedPlate(veh.plate);
+    if (veh.fuel_type) setFuelType(veh.fuel_type);
+  };
+
+  const handleSelectManual = () => {
+    setSelectedVehicleId("manual");
+    setSelectedPlate(null);
+  };
 
   const categories = [
     {
@@ -157,7 +231,7 @@ export default function DiagnosticoPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          vehicle: { brand, model, year },
+          vehicle: { brand, model, year, fuelType, plate: selectedPlate },
           category: selectedCategory,
           symptoms: selectedSymptoms,
           customDescription: customText,
@@ -232,60 +306,233 @@ export default function DiagnosticoPage() {
             <div className="space-y-8 animate-enter-scale">
               {/* SELECCIÓN DE VEHÍCULO */}
               <Card>
-                <div className="flex items-center gap-3 border-b border-gray-100 pb-4 mb-5">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#E8F0E9] text-[#0C3B2E]">
-                    <Car size={20} className="text-[#6D9773]" />
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-100 pb-4 mb-5">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#E8F0E9] text-[#0C3B2E]">
+                      <Car size={20} className="text-[#6D9773]" />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-bold text-[#0C3B2E]">
+                        1. Vehículo a Diagnosticar
+                      </h3>
+                      <p className="text-xs text-gray-500">
+                        {userVehicles.length > 0
+                          ? "Selecciona uno de tus autos guardados o ingresa otro vehículo"
+                          : "Permite a la IA calibrar las tolerancias mecánicas y altitud geográfica"}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-base font-bold text-[#0C3B2E]">
-                      1. Datos de tu Vehículo
-                    </h3>
-                    <p className="text-xs text-gray-500">
-                      Permite a la IA calibrar las tolerancias mecánicas y altitud geográfica
-                    </p>
-                  </div>
+
+                  <Link
+                    href="/perfil"
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-[#6D9773] hover:text-[#0C3B2E] transition"
+                  >
+                    <span>Mis autos en Perfil</span>
+                    <ExternalLink size={13} />
+                  </Link>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1.5">
-                      Marca
-                    </label>
-                    <input
-                      type="text"
-                      value={brand}
-                      onChange={(e) => setBrand(e.target.value)}
-                      placeholder="Ej. Toyota, Suzuki, Nissan"
-                      className="w-full rounded-xl border border-[#DCE7DE] bg-white px-3.5 py-2.5 text-xs text-[#0C3B2E] outline-none focus:border-[#6D9773] focus:ring-2 focus:ring-[#6D9773]/20"
-                    />
+                {loadingVehicles ? (
+                  <div className="flex items-center gap-3 py-6 justify-center text-xs text-gray-500 font-medium">
+                    <RefreshCw size={16} className="animate-spin text-[#6D9773]" />
+                    <span>Cargando los vehículos guardados en tu perfil...</span>
                   </div>
+                ) : userVehicles.length > 0 ? (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs font-bold uppercase tracking-wider text-gray-600">
+                        Autos registrados en tu perfil (haz clic para elegir):
+                      </p>
+                      {selectedPlate && (
+                        <span className="text-xs font-semibold text-[#0C3B2E] bg-[#E8F0E9] px-2.5 py-0.5 rounded-full border border-[#6D9773]/30">
+                          Placa seleccionada: <strong>{selectedPlate}</strong>
+                        </span>
+                      )}
+                    </div>
 
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1.5">
-                      Modelo
-                    </label>
-                    <input
-                      type="text"
-                      value={model}
-                      onChange={(e) => setModel(e.target.value)}
-                      placeholder="Ej. Corolla, Hilux, Grand Vitara"
-                      className="w-full rounded-xl border border-[#DCE7DE] bg-white px-3.5 py-2.5 text-xs text-[#0C3B2E] outline-none focus:border-[#6D9773] focus:ring-2 focus:ring-[#6D9773]/20"
-                    />
-                  </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {userVehicles.map((veh) => {
+                        const isSelected = selectedVehicleId === veh.id;
+                        return (
+                          <div
+                            key={veh.id}
+                            onClick={() => handleSelectVehicle(veh)}
+                            className={`group relative flex items-center gap-3.5 p-3.5 rounded-2xl border transition-all cursor-pointer ${
+                              isSelected
+                                ? "border-[#0C3B2E] bg-[#E8F0E9]/70 shadow-md ring-2 ring-[#0C3B2E]/20"
+                                : "border-gray-200 bg-white hover:border-[#6D9773] hover:bg-[#F8FAF8]"
+                            }`}
+                          >
+                            {/* Imagen o Ícono */}
+                            <div className="relative h-12 w-12 shrink-0 rounded-xl overflow-hidden bg-white border border-gray-200 flex items-center justify-center">
+                              {veh.image_url ? (
+                                <img
+                                  src={veh.image_url}
+                                  alt={`${veh.brand} ${veh.model}`}
+                                  className="h-full w-full object-cover"
+                                />
+                              ) : (
+                                <Car size={22} className="text-[#6D9773]" />
+                              )}
+                              {isSelected && (
+                                <div className="absolute top-1 right-1 h-3.5 w-3.5 rounded-full bg-[#0C3B2E] text-white flex items-center justify-center">
+                                  <Check size={9} strokeWidth={3} />
+                                </div>
+                              )}
+                            </div>
 
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1.5">
-                      Año de Fabricación
-                    </label>
-                    <input
-                      type="number"
-                      value={year}
-                      onChange={(e) => setYear(e.target.value)}
-                      placeholder="Ej. 2018"
-                      className="w-full rounded-xl border border-[#DCE7DE] bg-white px-3.5 py-2.5 text-xs text-[#0C3B2E] outline-none focus:border-[#6D9773] focus:ring-2 focus:ring-[#6D9773]/20"
-                    />
+                            {/* Info */}
+                            <div className="min-w-0 flex-1">
+                              <h4 className="font-extrabold text-xs text-[#0C3B2E] truncate">
+                                {veh.brand} {veh.model}
+                              </h4>
+                              <p className="text-[11px] text-gray-500 truncate mt-0.5">
+                                {veh.year} • {veh.color || "Vehículo"} {veh.transmission ? `• ${veh.transmission}` : ""}
+                              </p>
+                              <div className="mt-1 flex items-center gap-1.5">
+                                <span className="rounded bg-white px-1.5 py-0.5 text-[10px] font-extrabold tracking-wider text-[#0C3B2E] border border-gray-300">
+                                  {veh.plate}
+                                </span>
+                                {veh.fuel_type && (
+                                  <span className="text-[10px] text-gray-500 font-medium">
+                                    {veh.fuel_type}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+
+                      {/* Opción para escribir manualmente otro vehículo */}
+                      <div
+                        onClick={handleSelectManual}
+                        className={`flex items-center gap-3 p-3.5 rounded-2xl border transition-all cursor-pointer ${
+                          selectedVehicleId === "manual"
+                            ? "border-[#0C3B2E] bg-[#E8F0E9]/70 shadow-md ring-2 ring-[#0C3B2E]/20"
+                            : "border-dashed border-gray-300 bg-white hover:border-[#6D9773] hover:bg-[#F8FAF8]"
+                        }`}
+                      >
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gray-100 text-gray-500">
+                          <Plus size={20} className={selectedVehicleId === "manual" ? "text-[#0C3B2E]" : "text-gray-400"} />
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-xs text-[#0C3B2E]">
+                            Ingresar otro vehículo
+                          </h4>
+                          <p className="text-[11px] text-gray-500">
+                            Escribe manualmente marca y modelo
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Si está en modo manual, desplegar los campos para escribir */}
+                    {selectedVehicleId === "manual" && (
+                      <div className="mt-4 pt-4 border-t border-gray-100 grid grid-cols-1 sm:grid-cols-3 gap-4 animate-enter-scale">
+                        <div>
+                          <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1.5">
+                            Marca
+                          </label>
+                          <input
+                            type="text"
+                            value={brand}
+                            onChange={(e) => setBrand(e.target.value)}
+                            placeholder="Ej. Toyota, Suzuki, Nissan"
+                            className="w-full rounded-xl border border-[#DCE7DE] bg-white px-3.5 py-2.5 text-xs text-[#0C3B2E] outline-none focus:border-[#6D9773] focus:ring-2 focus:ring-[#6D9773]/20"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1.5">
+                            Modelo
+                          </label>
+                          <input
+                            type="text"
+                            value={model}
+                            onChange={(e) => setModel(e.target.value)}
+                            placeholder="Ej. Corolla, Hilux, Grand Vitara"
+                            className="w-full rounded-xl border border-[#DCE7DE] bg-white px-3.5 py-2.5 text-xs text-[#0C3B2E] outline-none focus:border-[#6D9773] focus:ring-2 focus:ring-[#6D9773]/20"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1.5">
+                            Año de Fabricación
+                          </label>
+                          <input
+                            type="number"
+                            value={year}
+                            onChange={(e) => setYear(e.target.value)}
+                            placeholder="Ej. 2018"
+                            className="w-full rounded-xl border border-[#DCE7DE] bg-white px-3.5 py-2.5 text-xs text-[#0C3B2E] outline-none focus:border-[#6D9773] focus:ring-2 focus:ring-[#6D9773]/20"
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
-                </div>
+                ) : (
+                  <div className="space-y-4">
+                    {/* Alerta amigable si no tiene vehículos guardados */}
+                    <div className="rounded-2xl bg-[#F0F5F1] p-3.5 border border-[#DCE7DE] flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-[#0C3B2E]">
+                      <div className="flex items-center gap-2">
+                        <Car size={16} className="text-[#6D9773] shrink-0" />
+                        <span>
+                          {isLoggedIn
+                            ? "No tienes autos registrados aún en tu perfil."
+                            : "Inicia sesión para cargar automáticamente los autos que tienes guardados en tu cuenta."}
+                        </span>
+                      </div>
+                      <Link
+                        href={isLoggedIn ? "/perfil" : "/login"}
+                        className="font-bold text-[#6D9773] hover:underline shrink-0"
+                      >
+                        {isLoggedIn ? "Registrar auto ahora en mi perfil →" : "Iniciar sesión →"}
+                      </Link>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <div>
+                        <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1.5">
+                          Marca
+                        </label>
+                        <input
+                          type="text"
+                          value={brand}
+                          onChange={(e) => setBrand(e.target.value)}
+                          placeholder="Ej. Toyota, Suzuki, Nissan"
+                          className="w-full rounded-xl border border-[#DCE7DE] bg-white px-3.5 py-2.5 text-xs text-[#0C3B2E] outline-none focus:border-[#6D9773] focus:ring-2 focus:ring-[#6D9773]/20"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1.5">
+                          Modelo
+                        </label>
+                        <input
+                          type="text"
+                          value={model}
+                          onChange={(e) => setModel(e.target.value)}
+                          placeholder="Ej. Corolla, Hilux, Grand Vitara"
+                          className="w-full rounded-xl border border-[#DCE7DE] bg-white px-3.5 py-2.5 text-xs text-[#0C3B2E] outline-none focus:border-[#6D9773] focus:ring-2 focus:ring-[#6D9773]/20"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1.5">
+                          Año de Fabricación
+                        </label>
+                        <input
+                          type="number"
+                          value={year}
+                          onChange={(e) => setYear(e.target.value)}
+                          placeholder="Ej. 2018"
+                          className="w-full rounded-xl border border-[#DCE7DE] bg-white px-3.5 py-2.5 text-xs text-[#0C3B2E] outline-none focus:border-[#6D9773] focus:ring-2 focus:ring-[#6D9773]/20"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
               </Card>
 
               {/* SELECCIÓN DE SÍNTOMAS */}
@@ -299,34 +546,91 @@ export default function DiagnosticoPage() {
                       2. Identifica los Síntomas o Fallas
                     </h3>
                     <p className="text-xs text-gray-500">
-                      Selecciona una categoría o escribe directamente los síntomas
+                      Puedes marcar opciones en múltiples categorías; todos tus síntomas seleccionados se conservan juntos
                     </p>
                   </div>
                 </div>
 
-                {/* Categorías tabs */}
+                {/* Categorías tabs con badges de cantidad */}
                 <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
-                  {categories.map((cat) => (
-                    <button
-                      key={cat.id}
-                      type="button"
-                      onClick={() => {
-                        setSelectedCategory(cat.id);
-                        setSelectedSymptoms([]);
-                      }}
-                      className={`flex flex-col items-center gap-2 p-3.5 rounded-2xl border text-center transition-all cursor-pointer ${
-                        selectedCategory === cat.id
-                          ? "border-[#0C3B2E] bg-[#0C3B2E] text-white shadow-md"
-                          : "border-[#DCE7DE] bg-white text-gray-700 hover:border-[#6D9773] hover:bg-[#F8FAF8]"
-                      }`}
-                    >
-                      <span className={selectedCategory === cat.id ? "text-[#FFBA00]" : "text-[#6D9773]"}>
-                        {cat.icon}
-                      </span>
-                      <span className="text-xs font-bold">{cat.name}</span>
-                    </button>
-                  ))}
+                  {categories.map((cat) => {
+                    const catCount = selectedSymptoms.filter((s) => cat.symptoms.includes(s)).length;
+                    return (
+                      <button
+                        key={cat.id}
+                        type="button"
+                        onClick={() => setSelectedCategory(cat.id)}
+                        className={`relative flex flex-col items-center gap-2 p-3.5 rounded-2xl border text-center transition-all cursor-pointer ${
+                          selectedCategory === cat.id
+                            ? "border-[#0C3B2E] bg-[#0C3B2E] text-white shadow-md"
+                            : "border-[#DCE7DE] bg-white text-gray-700 hover:border-[#6D9773] hover:bg-[#F8FAF8]"
+                        }`}
+                      >
+                        {/* Indicador de síntomas marcados en esta categoría */}
+                        {catCount > 0 && (
+                          <span
+                            className={`absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-black shadow-sm ${
+                              selectedCategory === cat.id
+                                ? "bg-[#FFBA00] text-[#0C3B2E]"
+                                : "bg-[#0C3B2E] text-white ring-2 ring-white"
+                            }`}
+                          >
+                            {catCount}
+                          </span>
+                        )}
+
+                        <span className={selectedCategory === cat.id ? "text-[#FFBA00]" : "text-[#6D9773]"}>
+                          {cat.icon}
+                        </span>
+                        <span className="text-xs font-bold">{cat.name}</span>
+                      </button>
+                    );
+                  })}
                 </div>
+
+                {/* Resumen de Síntomas Acumulados (entre todas las categorías) */}
+                {selectedSymptoms.length > 0 && (
+                  <div className="mb-6 rounded-2xl bg-[#E8F0E9]/80 border border-[#6D9773]/30 p-4 animate-enter-scale">
+                    <div className="flex items-center justify-between mb-2.5">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 size={16} className="text-[#0C3B2E]" />
+                        <span className="text-xs font-bold text-[#0C3B2E]">
+                          Síntomas marcados en total ({selectedSymptoms.length}):
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedSymptoms([])}
+                        className="text-[11px] font-bold text-red-600 hover:text-red-700 hover:underline cursor-pointer flex items-center gap-1"
+                      >
+                        <X size={12} />
+                        <span>Desmarcar todos</span>
+                      </button>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2">
+                      {selectedSymptoms.map((sym, idx) => (
+                        <span
+                          key={idx}
+                          className="inline-flex items-center gap-1.5 rounded-full bg-[#0C3B2E] text-white px-3 py-1 text-xs font-medium shadow-xs"
+                        >
+                          <span>{sym}</span>
+                          <button
+                            type="button"
+                            onClick={() => toggleSymptom(sym)}
+                            className="hover:text-[#FFBA00] cursor-pointer ml-1"
+                            title="Quitar este síntoma"
+                          >
+                            <X size={12} />
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                    <p className="mt-2 text-[11px] text-gray-600">
+                      💡 Puedes cambiar entre las pestañas de arriba y seguir marcando otros problemas (ej. motor + temperatura + embrague). Todos se guardan y se analizarán juntos.
+                    </p>
+                  </div>
+                )}
 
                 {/* Lista de síntomas para la categoría seleccionada */}
                 <div className="mb-6">
@@ -479,6 +783,21 @@ export default function DiagnosticoPage() {
                       <h2 className="mt-1 text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
                         {diagnosisResult.title}
                       </h2>
+
+                      <div className="mt-2 text-xs text-gray-300 font-medium flex items-center gap-2 flex-wrap">
+                        <Car size={14} className="text-[#FFBA00]" />
+                        <span>Vehículo: <strong>{brand} {model} ({year})</strong></span>
+                        {selectedPlate && (
+                          <span className="rounded bg-white/20 px-2 py-0.5 text-[11px] font-bold text-white border border-white/25">
+                            {selectedPlate}
+                          </span>
+                        )}
+                        {fuelType && (
+                          <span className="text-[11px] text-gray-400">
+                            • {fuelType}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
 

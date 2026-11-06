@@ -30,12 +30,43 @@ export default function Home() {
 
       <main className="flex-1">
         {/* HERO SECTION */}
-        <section className="relative overflow-hidden border-b border-[#DCE7DE] bg-gradient-to-b from-[#0C3B2E] via-[#0F4C3A] to-[#07261D] text-white">
-          {/* Ambient Lighting Orbs */}
-          <div className="absolute -left-20 -top-20 h-96 w-96 rounded-full bg-[#6D9773]/20 blur-3xl pointer-events-none" />
-          <div className="absolute right-0 top-1/3 h-80 w-80 rounded-full bg-[#FFBA00]/15 blur-3xl pointer-events-none" />
+        <section className="relative overflow-hidden border-b border-[#DCE7DE] bg-[#05130E] text-white">
+          {/* 
+            ========================================================================
+            1. IMAGEN DE FONDO (Nitidez, Contraste y Brillo)
+            - opacity-95: Mantiene la imagen nítida casi al 100%
+            - contrast-110: Aumenta la profundidad de los negros y reflejos dorados
+            - brightness-95: Calibra el brillo para que no encandile
+            - bg-right md:bg-center: Luce el auto hacia el centro-derecha
+            ========================================================================
+          */}
+          <div
+            className="absolute inset-0 bg-cover bg-right md:bg-center bg-no-repeat pointer-events-none transition-all duration-700 opacity-95 contrast-110 brightness-95"
+            style={{ backgroundImage: "url('/images/hero-bg.png')" }}
+          />
 
-          {/* Grid pattern overlay */}
+          {/* 
+            ========================================================================
+            2. DIFUMINADO HORIZONTAL ESTÉTICO (Protege el texto sin tapar el auto)
+            - from-[#05130E]/95: Oscuro a la izquierda donde están las letras y buscador
+            - via-[#05130E]/50: Difuminado suave intermedio
+            - to-transparent: Totalmente transparente a la derecha para ver el auto nítido
+            ========================================================================
+          */}
+          <div className="absolute inset-0 bg-gradient-to-r from-[#05130E]/95 via-[#05130E]/50 to-transparent pointer-events-none" />
+
+          {/* 
+            ========================================================================
+            3. DIFUMINADO INFERIOR (Transición suave hacia la siguiente sección)
+            ========================================================================
+          */}
+          <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-[#05130E] to-transparent pointer-events-none" />
+
+          {/* Ambient Lighting Orbs sutiles */}
+          <div className="absolute -left-20 -top-20 h-96 w-96 rounded-full bg-[#6D9773]/15 blur-3xl pointer-events-none" />
+          <div className="absolute right-10 top-1/4 h-80 w-80 rounded-full bg-[#FFBA00]/10 blur-3xl pointer-events-none" />
+
+          {/* Grid pattern overlay muy sutil */}
           <div className="absolute inset-0 opacity-5 bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:24px_24px] pointer-events-none" />
 
           <div className="relative mx-auto max-w-7xl px-4 sm:px-6 py-16 md:py-24">

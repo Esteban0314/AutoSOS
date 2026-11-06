@@ -229,6 +229,83 @@ function runAutoSOSExpertInference({
     return generateDTCResolution(code, vehicle, costFactor);
   }
 
+  // 1.5. DETECCIÓN MULTI-SISTEMA (Cuando el usuario marca fallas en más de una categoría)
+  const hasCooling = q.includes("temperatura") || q.includes("calienta") || q.includes("refrigerante") || q.includes("radiador") || q.includes("vapor");
+  const hasEngine = q.includes("cascabelea") || q.includes("check engine") || q.includes("tiembla") || q.includes("humo") || q.includes("potencia") || q.includes("ralentí");
+  const hasClutch = q.includes("embrague") || q.includes("clutch") || q.includes("patina") || q.includes("marcha") || q.includes("transmisión");
+  const hasBrakes = q.includes("freno") || q.includes("pastilla") || q.includes("esponjoso") || q.includes("chirrido") || q.includes("disco");
+  const hasElectrical = q.includes("bateria") || q.includes("batería") || q.includes("arranque") || q.includes("no arranca") || q.includes("alternador");
+
+  const activeSystems: { name: string; priority: number }[] = [];
+  if (hasCooling) activeSystems.push({ name: "Temperatura y Radiador", priority: 1 });
+  if (hasEngine) activeSystems.push({ name: "Motor y Combustión", priority: 2 });
+  if (hasClutch) activeSystems.push({ name: "Embrague y Transmisión", priority: 3 });
+  if (hasBrakes) activeSystems.push({ name: "Frenos y Suspensión", priority: 4 });
+  if (hasElectrical) activeSystems.push({ name: "Batería y Sistema Eléctrico", priority: 5 });
+
+  if (activeSystems.length >= 2) {
+    const systemNames = activeSystems.map((s) => s.name).join(" + ");
+    const isCritical = hasCooling || (hasBrakes && q.includes("esponjoso"));
+
+    const combinedCauses = [];
+    if (hasCooling) {
+      combinedCauses.push({
+        cause: "Compromiso térmico del circuito de refrigeración (termostato, fugas o electroventilador)",
+        probability: 90,
+        description: "En La Paz el agua hierve a 87°C; cualquier pérdida de refrigerante o presurización eleva rápidamente la aguja de temperatura.",
+      });
+    }
+    if (hasEngine) {
+      combinedCauses.push({
+        cause: "Desbalance en mezcla estequiométrica o ignición deficiente en altura",
+        probability: 86,
+        description: "Cascabeleo o pérdida de potencia por sensor MAF contaminado, bujías desgastadas o combustible de bajo octanaje.",
+      });
+    }
+    if (hasClutch) {
+      combinedCauses.push({
+        cause: "Desgaste avanzado del conjunto de embrague (disco y prensa patinando)",
+        probability: 84,
+        description: "Las subidas pronunciadas de La Paz exigen alto torque; el deslizamiento continuo sobrecalienta y quema el forro de embrague.",
+      });
+    }
+    if (hasBrakes) {
+      combinedCauses.push({
+        cause: "Fatiga de fricción en pastillas o pérdida de presión hidráulica",
+        probability: 80,
+        description: "Requiere verificación urgente de espesor de discos y sangrado de líquido de frenos.",
+      });
+    }
+    if (hasElectrical) {
+      combinedCauses.push({
+        cause: "Tensión irregular en acumulador de 12V o regulador de alternador",
+        probability: 78,
+        description: "Afecta los sensores de la ECU y el encendido en frío matutino en la altura.",
+      });
+    }
+
+    const steps = [
+      "Prioriza resolver de inmediato la temperatura/refrigeración para evitar fundición de motor o deformación de culata.",
+      "Evita exigir el vehículo en pendientes empinadas (como la Autopista La Paz - El Alto o Sopocachi).",
+      "Solicita un diagnóstico integral con escáner OBD-II en un taller multimarca certificado.",
+    ];
+
+    return {
+      title: `Diagnóstico Combinado Multi-Sistema: ${systemNames}`,
+      severity: isCritical ? "CRITICAL" : "HIGH",
+      severityLabel: isCritical ? "Crítico / Múltiples Sistemas Comprometidos" : "Atención Prioritaria (Multi-Falla)",
+      confidence: 93,
+      estimatedCost: `${Math.round(650 * costFactor)} - ${Math.round(1800 * costFactor)} Bs`,
+      summary: `Se detectaron fallas concurrentes en ${activeSystems.length} sistemas mecánicos de tu ${vehicle.brand} ${vehicle.model} (${vehicle.year}): ${systemNames}. Al presentarse simultáneamente, ${hasCooling ? "el incremento de temperatura empeora la combustión y desgasta prematuramente el embrague." : "se requiere una inspección preventiva unificada para evitar fallas en cadena en las calles de La Paz."}`,
+      possibleCauses: combinedCauses.slice(0, 4),
+      immediateSteps: steps,
+      recommendedSpecialties: ["Mecánica integral", "Inyección y enfriamiento", "Diagnóstico computarizado", "Talleres certificados"],
+      matchedBusinesses: businesses.filter((b) => b.type === "workshop"),
+      engineUsed: "Motor Neuronal Automotriz AutoSOS (Multi-Sistema)",
+      altitudeNote: "La topografía paceña y la altitud de 3,600 msnm amplifican fallas combinadas de temperatura, embrague y combustión",
+    };
+  }
+
   // 2. FRENOS / ABS / DISCOS / PEDAL
   if (
     category === "brakes" ||
